@@ -20,6 +20,11 @@ ENV_FILE=".env.prod"
 
 # Calculate ports (convert alphanumeric USER_ID to numeric for port calculation)
 calculate_ports() {
+    # Ensure USER_ID is numeric, default to 0 if not
+    if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
+        USER_ID=0
+    fi
+    
     PORT_RANGE_BEGIN=$((APPLICATION_IDENTITY_NUMBER * 100 + RANGE_START))
     PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED))
     HTTPS_PORT=$((PORT + 1))
@@ -349,23 +354,6 @@ check_status() {
             "docker_compose_ps": $docker_status,
             "git_remote": $git_remotes
           }'
-}
-
-# Show usage information
-show_usage() {
-    echo "Usage: $0 [COMMAND]"
-    echo ""
-    echo "Commands:"
-    echo "  start    - Deploy and start ${NAME_OF_APPLICATION} services"
-    echo "  stop     - Stop all services"
-    echo "  restart  - Restart all services"
-    echo "  logs     - Show service logs"
-    echo "  ps       - Show service status"
-    echo ""
-    echo "Examples:"
-    echo "  $0 start    # Deploy application"
-    echo "  $0 stop     # Stop services"
-    echo "  $0 logs     # View logs"
 }
 
 # Main function - orchestrates the deployment process
