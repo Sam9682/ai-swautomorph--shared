@@ -351,6 +351,23 @@ check_status() {
           }'
 }
 
+# Show usage information
+show_usage() {
+    echo "Usage: $0 [COMMAND]"
+    echo ""
+    echo "Commands:"
+    echo "  start    - Deploy and start ${NAME_OF_APPLICATION} services"
+    echo "  stop     - Stop all services"
+    echo "  restart  - Restart all services"
+    echo "  logs     - Show service logs"
+    echo "  ps       - Show service status"
+    echo ""
+    echo "Examples:"
+    echo "  $0 start    # Deploy application"
+    echo "  $0 stop     # Stop services"
+    echo "  $0 logs     # View logs"
+}
+
 # Main function - orchestrates the deployment process
 main() {
     calculate_ports
