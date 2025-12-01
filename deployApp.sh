@@ -4,7 +4,7 @@
 set -e
 
 # Load configuration
-source ./conf/deploy.ini
+source ../conf/deploy.ini
 
 # Global Parameters
 COMMAND=${1:-help}
@@ -12,8 +12,6 @@ USER_ID=${2:-0}
 USER_NAME=${3:-"user"}
 USER_EMAIL=${4:-"user@swautomorph.com"}
 DESCRIPTION=${5:-"Basic Information Display"}
-#max number of applications per user, define the range of possible port sockets
-RANGE_RESERVED=10
 
 # Configuration
 DOMAIN=${DOMAIN:-"www.swautomorph.com"}
@@ -28,7 +26,7 @@ calculate_ports() {
     fi
     
     PORT_RANGE_BEGIN=$((RANGE_START + USER_ID * RANGE_RESERVED))
-    PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER))
+    PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * 2))
     HTTPS_PORT=$((PORT + 1))
 }
 
@@ -239,7 +237,7 @@ setup_firewall() {
 create_backup_script() {
     log_info "Creating backup script..."
     
-    cat > ./scripts/backup.sh << 'EOF'
+    cat > ../scripts/backup.sh << 'EOF'
 #!/bin/bash
 # ${NAME_OF_APPLICATION} Backup Script
 
@@ -265,14 +263,14 @@ else
 fi
 EOF
     
-    chmod +x ./scripts/backup.sh
+    chmod +x ../scripts/backup.sh
     log_info "Backup script created ✅"
 }
 
 # Main deployment process
 start() {
     log_info "Starting ${NAME_OF_APPLICATION} production deployment..."
-    
+    show_environment
     check_prerequisites
     generate_secrets
     setup_ssl
@@ -292,12 +290,12 @@ start() {
     echo "1. Test the application at https://$DOMAIN"
     echo "2. Change default demo password"
     echo "3. Configure DNS to point to this server"
-    echo "4. Set up automated backups: ./scripts/backup.sh"
+    echo "4. Set up automated backups: ../scripts/backup.sh"
     echo "5. Monitor logs: docker-compose -f docker-compose.prod.yml logs -f"
     echo ""
     echo "🔧 Management Commands:"
     echo "- View logs: make logs"
-    echo "- Backup database: ./scripts/backup.sh"
+    echo "- Backup database: ../scripts/backup.sh"
     echo "- Stop services: make stop"
     echo "- Update application: git pull && make prod"
 }
