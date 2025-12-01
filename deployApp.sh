@@ -4,7 +4,7 @@
 set -e
 
 # Load configuration
-source ../conf/deploy.ini
+source ./conf/deploy.ini
 
 # Global Parameters
 COMMAND=${1:-help}
@@ -237,7 +237,7 @@ setup_firewall() {
 create_backup_script() {
     log_info "Creating backup script..."
     
-    cat > ../scripts/backup.sh << 'EOF'
+    cat > ./scripts/backup.sh << 'EOF'
 #!/bin/bash
 # ${NAME_OF_APPLICATION} Backup Script
 
@@ -263,7 +263,7 @@ else
 fi
 EOF
     
-    chmod +x ../scripts/backup.sh
+    chmod +x ./scripts/backup.sh
     log_info "Backup script created ✅"
 }
 
@@ -290,12 +290,12 @@ start() {
     echo "1. Test the application at https://$DOMAIN"
     echo "2. Change default demo password"
     echo "3. Configure DNS to point to this server"
-    echo "4. Set up automated backups: ../scripts/backup.sh"
+    echo "4. Set up automated backups: ./scripts/backup.sh"
     echo "5. Monitor logs: docker-compose -f docker-compose.prod.yml logs -f"
     echo ""
     echo "🔧 Management Commands:"
     echo "- View logs: make logs"
-    echo "- Backup database: ../scripts/backup.sh"
+    echo "- Backup database: ./scripts/backup.sh"
     echo "- Stop services: make stop"
     echo "- Update application: git pull && make prod"
 }
