@@ -12,6 +12,8 @@ USER_ID=${2:-0}
 USER_NAME=${3:-"user"}
 USER_EMAIL=${4:-"user@swautomorph.com"}
 DESCRIPTION=${5:-"Basic Information Display"}
+#max number of applications per user, define the range of possible port sockets
+RANGE_RESERVED=10
 
 # Configuration
 DOMAIN=${DOMAIN:-"www.swautomorph.com"}
@@ -25,8 +27,8 @@ calculate_ports() {
         USER_ID=0
     fi
     
-    PORT_RANGE_BEGIN=$((APPLICATION_IDENTITY_NUMBER * 100 + RANGE_START))
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED))
+    PORT_RANGE_BEGIN=$((RANGE_START + USER_ID * RANGE_RESERVED))
+    PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER))
     HTTPS_PORT=$((PORT + 1))
 }
 
@@ -168,15 +170,15 @@ deploy_services() {
     log_info "Building and deploying services..."
 
     # Stop existing services
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
     
     # Build images
     log_info "Building Docker images..."
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml build --no-cache --build-arg PIP_UPGRADE=1
+    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml build --no-cache --build-arg PIP_UPGRADE=1
     
     # Start services
     log_info "Starting production services..."
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d
+    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to start..."
@@ -248,7 +250,7 @@ BACKUP_FILE="$BACKUP_DIR/ai_haccp_backup_$DATE"
 mkdir -p "$BACKUP_DIR"
 
 echo "Creating backup: $BACKUP_FILE"
-PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
+PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
 docker cp $(docker-compose -f docker-compose.prod.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
 
 if [[ $? -eq 0 ]]; then
@@ -303,21 +305,21 @@ start() {
 # Stop services
 stop_services() {
     log_info "Stopping ${NAME_OF_APPLICATION} services..."
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down
+    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down
     log_info "Services stopped successfully ✅"
 }
 
 # Restart services
 restart_services() {
     log_info "Restarting ${NAME_OF_APPLICATION} services..."
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml restart
+    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml restart
     log_info "Services restarted successfully ✅"
 }
 
 # Show logs
 show_logs() {
     log_info "Showing ${NAME_OF_APPLICATION} service logs..."
-    PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml logs -f
+    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml logs -f
 }
 
 # Check service status
@@ -338,7 +340,7 @@ check_status() {
     
     # Check docker-compose status
     docker_status="IS_NOT_RUNNING"
-    if PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED)) HTTPS_PORT=$((PORT_RANGE_BEGIN + USER_ID * RANGE_RESERVED + 1)) USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
         docker_status="IS_RUNNING"
     fi
     
