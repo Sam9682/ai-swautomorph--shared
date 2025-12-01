@@ -9,13 +9,13 @@ source ./conf/deploy.ini
 # Global Parameters
 COMMAND=${1:-help}
 USER_ID=${2:-0}
-USER_NAME=${3:-"user"}
-USER_EMAIL=${4:-"user@swautomorph.com"}
-DESCRIPTION=${5:-"Basic Information Display"}
+USER_NAME=${3:-"admin"}
+USER_EMAIL=${4:-"admin@swautomorph.com"}
+DESCRIPTION=${5:-"Basic Admin User"}
 
 # Configuration
 DOMAIN=${DOMAIN:-"www.swautomorph.com"}
-EMAIL=${EMAIL:-"user@swautomorph.com"}
+EMAIL=${EMAIL:-"admin@swautomorph.com"}
 ENV_FILE=".env.prod"
 
 # Calculate ports (convert alphanumeric USER_ID to numeric for port calculation)
@@ -126,8 +126,17 @@ setup_ssl() {
     if [[ ! -d "ssl" ]]; then
         mkdir -p ssl
         
+        # Check for existing certificates in ~/.ssh/
+        if [[ -f "~/.ssh/www_swautomorph_com.crt" && -f "~/.ssh/privateKey_automorph_simple.key" ]]; then
+            log_info "Using existing certificates from ~/.ssh/..."
+            
+            # Copy existing certificates
+            cp ~/.ssh/www_swautomorph_com.crt ssl/fullchain.pem
+            cp ~/.ssh/privateKey_automorph_simple.key ssl/privkey.pem
+            
+            log_info "Existing certificates copied ✅"
         # Check if certbot is installed
-        if command -v certbot &> /dev/null; then
+        elif command -v certbot &> /dev/null; then
             log_info "Obtaining SSL certificate for $DOMAIN..."
             
             # Stop nginx if running
@@ -142,8 +151,8 @@ setup_ssl() {
                 --quiet
             
             # Copy certificates
-            sudo cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ssl/
-            sudo cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ssl/
+            sudo cp "~/.ssh/www_swautomorph_com.crt" ssl/
+            sudo cp "~/.ssh/privateKey_automorph_simple.key" ssl/
             sudo chown -R $USER:$USER ssl/
             
             log_info "SSL certificates obtained ✅"
