@@ -26,8 +26,8 @@ calculate_ports() {
     fi
     
     PORT_RANGE_BEGIN=$((RANGE_START + USER_ID * RANGE_RESERVED))
-    PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * 2))
-    HTTPS_PORT=$((PORT + 1))
+    HTTP_PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * 2))
+    HTTPS_PORT=$((HTTP_PORT + 1))
 }
 
 # Display environment variables for operations
@@ -38,7 +38,7 @@ show_environment() {
     echo "  USER_ID=${USER_ID}"
     echo "  USER_NAME=${USER_NAME}"
     echo "  USER_EMAIL=${USER_EMAIL}"
-    echo "  PORT=${PORT}"
+    echo "  HTTP_PORT=${HTTP_PORT}"
     echo "  HTTPS_PORT=${HTTPS_PORT}"
     echo ""
 }
@@ -177,15 +177,15 @@ deploy_services() {
     log_info "Building and deploying services..."
 
     # Stop existing services
-    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
     
     # Build images
     log_info "Building Docker images..."
-    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml build --no-cache --build-arg PIP_UPGRADE=1
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml build --no-cache --build-arg PIP_UPGRADE=1
     
     # Start services
     log_info "Starting production services..."
-    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to start..."
@@ -213,7 +213,7 @@ verify_deployment() {
     
     # Test API health endpoint
     sleep 10
-    if curl -f -s "http://www.swautomorph.com:${PORT}/health" > /dev/null; then
+    if curl -f -s "http://www.swautomorph.com:${HTTP_PORT}/health" > /dev/null; then
         log_info "API health check passed ✅"
     else
         log_warn "API health check failed, but services are running"
@@ -232,7 +232,7 @@ setup_firewall() {
         sudo ufw default deny incoming
         sudo ufw default allow outgoing
         sudo ufw allow ssh
-        sudo ufw allow ${PORT}/tcp
+        sudo ufw allow ${HTTP_PORT}/tcp
         sudo ufw allow ${HTTPS_PORT}/tcp
         sudo ufw --force enable
         
@@ -257,7 +257,7 @@ BACKUP_FILE="$BACKUP_DIR/ai_haccp_backup_$DATE"
 mkdir -p "$BACKUP_DIR"
 
 echo "Creating backup: $BACKUP_FILE"
-PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
+HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
 docker cp $(docker-compose -f docker-compose.prod.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
 
 if [[ $? -eq 0 ]]; then
@@ -312,21 +312,21 @@ start() {
 # Stop services
 stop_services() {
     log_info "Stopping ${NAME_OF_APPLICATION} services..."
-    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down
     log_info "Services stopped successfully ✅"
 }
 
 # Restart services
 restart_services() {
     log_info "Restarting ${NAME_OF_APPLICATION} services..."
-    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml restart
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml restart
     log_info "Services restarted successfully ✅"
 }
 
 # Show logs
 show_logs() {
     log_info "Showing ${NAME_OF_APPLICATION} service logs..."
-    PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml logs -f
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml logs -f
 }
 
 # Check service status
@@ -335,19 +335,19 @@ check_status() {
     params=$(jq -n --arg user_id "$USER_ID" \
                   --arg user_name "$USER_NAME" \
                   --arg user_email "$USER_EMAIL" \
-                  --arg port "$PORT" \
+                  --arg http_port "$HTTP_PORT" \
                   --arg https_port "$HTTPS_PORT" \
                   '{
                     "USER_ID": $user_id,
                     "USER_NAME": $user_name,
                     "USER_EMAIL": $user_email,
-                    "PORT": $port,
+                    "HTTP_PORT": $http_port,
                     "HTTPS_PORT": $https_port
                   }')
     
     # Check docker-compose status
     docker_status="IS_NOT_RUNNING"
-    if PORT=$PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
         docker_status="IS_RUNNING"
     fi
     
