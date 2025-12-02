@@ -119,6 +119,20 @@ EOF
     fi
 }
 
+# Generate nginx configuration from template
+generate_nginx_config() {
+    log_info "Generating nginx configuration..."
+    
+    if [[ -f "conf/nginx.conf.template" ]]; then
+        # Replace ${USER_ID} with actual USER_ID value
+        sed "s/\${USER_ID}/$USER_ID/g" conf/nginx.conf.template > conf/nginx.conf
+        log_info "nginx.conf generated from template ✅"
+    else
+        log_error "nginx.conf.template not found in conf/ directory"
+        exit 1
+    fi
+}
+
 # Setup SSL certificates
 setup_ssl() {
     log_info "Setting up SSL certificates..."
@@ -177,26 +191,26 @@ deploy_services() {
     log_info "Building and deploying services..."
 
     # Stop existing services
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml down 2>/dev/null || true
     
     # Build images
     log_info "Building Docker images..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml build --no-cache --build-arg PIP_UPGRADE=1
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
     
     # Start services
     log_info "Starting production services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml --env-file "$ENV_FILE" up -d
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml --env-file "$ENV_FILE" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to start..."
     sleep 30
     
     # Check service health
-    if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if docker-compose -f docker-compose.yml ps | grep -q "Up"; then
         log_info "Services deployed successfully ✅"
     else
         log_error "Some services failed to start"
-        docker-compose -f docker-compose.prod.yml logs
+        docker-compose -f docker-compose.yml logs
         exit 1
     fi
 }
@@ -206,7 +220,7 @@ verify_deployment() {
     log_info "Verifying deployment..."
     
     # Check if services are running
-    if ! docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if ! docker-compose -f docker-compose.yml ps | grep -q "Up"; then
         log_error "Services are not running properly"
         return 1
     fi
@@ -257,8 +271,8 @@ BACKUP_FILE="$BACKUP_DIR/ai_haccp_backup_$DATE"
 mkdir -p "$BACKUP_DIR"
 
 echo "Creating backup: $BACKUP_FILE"
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
-docker cp $(docker-compose -f docker-compose.prod.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
+HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
+docker cp $(docker-compose -f docker-compose.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
 
 if [[ $? -eq 0 ]]; then
     echo "Backup created successfully: $BACKUP_FILE"
@@ -282,6 +296,7 @@ start() {
     show_environment
     check_prerequisites
     generate_secrets
+    generate_nginx_config
     setup_ssl
     deploy_services
     verify_deployment
@@ -300,7 +315,7 @@ start() {
     echo "2. Change default demo password"
     echo "3. Configure DNS to point to this server"
     echo "4. Set up automated backups: ./scripts/backup.sh"
-    echo "5. Monitor logs: docker-compose -f docker-compose.prod.yml logs -f"
+    echo "5. Monitor logs: docker-compose -f docker-compose.yml logs -f"
     echo ""
     echo "🔧 Management Commands:"
     echo "- View logs: make logs"
@@ -312,44 +327,71 @@ start() {
 # Stop services
 stop_services() {
     log_info "Stopping ${NAME_OF_APPLICATION} services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml down
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml down
     log_info "Services stopped successfully ✅"
 }
 
 # Restart services
 restart_services() {
     log_info "Restarting ${NAME_OF_APPLICATION} services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml restart
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml restart
     log_info "Services restarted successfully ✅"
 }
 
 # Show logs
 show_logs() {
     log_info "Showing ${NAME_OF_APPLICATION} service logs..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml logs -f
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml logs -f
+}
+
+# Show usage help
+show_usage() {
+    echo "Usage: $0 [COMMAND] [USER_ID] [USER_NAME] [USER_EMAIL] [DESCRIPTION]"
+    echo ""
+    echo "Commands:"
+    echo "  start, -s, --start     Start the application"
+    echo "  stop, -k, --stop       Stop the application"
+    echo "  restart, -r, --restart Restart the application"
+    echo "  ps, -p, --ps           Show application status"
+    echo "  logs, -l, --logs       Show application logs"
+    echo "  help, -h, --help       Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0 start 1 john john@example.com \"My App\""
+    echo "  $0 stop"
+    echo "  $0 ps"
 }
 
 # Check service status
 check_status() {
-    # Get parameters
+    # Get actual ports from docker-compose ps output
+    actual_http_port="$HTTP_PORT"
+    actual_https_port="$HTTPS_PORT"
+    
+    # Check docker-compose status
+    docker_status="IS_NOT_RUNNING"
+    if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml ps | grep -q "Up"; then
+        docker_status="IS_RUNNING"
+        # Extract all ports from all running containers
+        all_ports=$(HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml ps | grep "Up" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n)
+        if [[ -n "$all_ports" ]]; then
+            docker_ports=$(echo "$all_ports" | head -1)
+        fi
+    fi
+    
+    # Get parameters with actual ports
     params=$(jq -n --arg user_id "$USER_ID" \
                   --arg user_name "$USER_NAME" \
                   --arg user_email "$USER_EMAIL" \
                   --arg http_port "$HTTP_PORT" \
                   --arg https_port "$HTTPS_PORT" \
                   '{
-                    "USER_ID": $user_id,
-                    "USER_NAME": $user_name,
-                    "USER_EMAIL": $user_email,
-                    "HTTP_PORT": $http_port,
-                    "HTTPS_PORT": $https_port
+                    "$USER_ID": $user_id,
+                    "$USER_NAME": $user_name,
+                    "$USER_EMAIL": $user_email,
+                    "$HTTP_PORT": $http_port,
+                    "$HTTPS_PORT": $https_port
                   }')
-    
-    # Check docker-compose status
-    docker_status="IS_NOT_RUNNING"
-    if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
-        docker_status="IS_RUNNING"
-    fi
     
     # Get git remote URLs
     git_remotes=$(git remote -v 2>/dev/null | awk '{print $2}' | sort -u | jq -R . | jq -s .)
@@ -357,10 +399,12 @@ check_status() {
     # Output JSON
     jq -n --argjson params "$params" \
           --arg docker_status "$docker_status" \
+          --argjson docker_ports "$docker_ports" \
           --argjson git_remotes "$git_remotes" \
           '{
             "environment_vars": $params,
             "docker_compose_ps": $docker_status,
+            "docker_ports": $docker_ports,
             "git_remote": $git_remotes
           }'
 }
@@ -370,27 +414,31 @@ main() {
     calculate_ports
 
     case $COMMAND in
-        "ps")
+        "ps"|"--ps"|"-p")
             check_status
             exit 0
             ;;
-        "stop")
+        "stop"|"--stop"|"-k")
             stop_services
             exit 0
             ;;
-        "logs")
+        "logs"|"--logs"|"-l")
             show_logs
             exit 0
             ;;
-        "restart")
+        "restart"|"--restart"|"-r")
             restart_services
             exit 0
             ;;
-        "start")
+        "start"|"--start"|"-s")
             echo "🚀 ${NAME_OF_APPLICATION} Production Deployment"
             echo "=================================="
 
             start
+            exit 0
+            ;;
+        "help"|"--help"|"-h")
+            show_usage
             exit 0
             ;;
         *)
