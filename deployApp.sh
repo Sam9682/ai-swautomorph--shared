@@ -191,26 +191,26 @@ deploy_services() {
     log_info "Building and deploying services..."
 
     # Stop existing services
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down 2>/dev/null || true
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down 2>/dev/null || true
     
     # Build images
     log_info "Building Docker images..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
     
     # Start services
     log_info "Starting production services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file "$ENV_FILE" up -d
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file "$ENV_FILE" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to start..."
     sleep 30
     
     # Check service health
-    if docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+    if docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
         log_info "Services deployed successfully ✅"
     else
         log_error "Some services failed to start"
-        docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml logs
+        docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml logs
         exit 1
     fi
 }
@@ -220,7 +220,7 @@ verify_deployment() {
     log_info "Verifying deployment..."
     
     # Check if services are running
-    if ! docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+    if ! docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
         log_error "Services are not running properly"
         return 1
     fi
@@ -271,8 +271,8 @@ BACKUP_FILE="$BACKUP_DIR/ai_haccp_backup_$DATE"
 mkdir -p "$BACKUP_DIR"
 
 echo "Creating backup: $BACKUP_FILE"
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
-docker cp $(docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
+HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
+docker cp $(docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
 
 if [[ $? -eq 0 ]]; then
     echo "Backup created successfully: $BACKUP_FILE"
@@ -327,14 +327,14 @@ start() {
 # Stop services
 stop_services() {
     log_info "Stopping ${NAME_OF_APPLICATION} services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down
     log_info "Services stopped successfully ✅"
 }
 
 # Restart services
 restart_services() {
     log_info "Restarting ${NAME_OF_APPLICATION} services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml restarttart
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml restarttart
     log_info "Services restarted successfully ✅"
 }
 
@@ -371,10 +371,10 @@ check_status() {
     # Check docker-compose status
     docker_status="IS_NOT_RUNNING"
     docker_ports="[]"
-    if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+    if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
         docker_status="IS_RUNNING"
         # Extract all ports from all running containers
-        all_ports=$(HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n)
+        all_ports=$(HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n)
         if [[ -n "$all_ports" ]]; then
             docker_ports=$(echo "$all_ports" | jq -R . | jq -s .)
         fi
