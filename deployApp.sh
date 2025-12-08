@@ -364,17 +364,19 @@ show_usage() {
 
 # Check service status
 check_status() {
-    # Get actual ports from docker-compose ps output
+    # Get actual ports
     actual_http_port="$HTTP_PORT"
     actual_https_port="$HTTPS_PORT"
     
-    # Check docker-compose status
+    # Check docker status using docker container ls
     docker_status="IS_NOT_RUNNING"
     docker_ports="[]"
-    if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+    
+    # Check if containers with name pattern exist and are running
+    if docker container ls --filter "status=running" --format "{{.Names}}" | grep -q "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$"; then
         docker_status="IS_RUNNING"
-        # Extract all ports from all running containers
-        all_ports=$(HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n)
+        # Extract all ports from running containers matching the pattern
+        all_ports=$(docker container ls --filter "status=running" --format "{{.Names}} {{.Ports}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n | uniq)
         if [[ -n "$all_ports" ]]; then
             docker_ports=$(echo "$all_ports" | jq -R . | jq -s .)
         fi
