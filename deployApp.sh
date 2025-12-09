@@ -242,13 +242,15 @@ setup_firewall() {
     
     if command -v ufw &> /dev/null; then
         # Configure UFW if available
-        sudo ufw --force reset
-        sudo ufw default deny incoming
-        sudo ufw default allow outgoing
-        sudo ufw allow ssh
-        sudo ufw allow ${HTTP_PORT}/tcp
         sudo ufw allow ${HTTPS_PORT}/tcp
-        sudo ufw --force enable
+        # if  ${HTTP_PORT} exist then allow it
+        if [[ -n "${HTTP_PORT}" ]]; then
+            sudo ufw allow ${HTTP_PORT}/tcp
+        fi
+        # if  ${HTTPS_PORT2} exist then allow it
+        if [[ -n "${HTTPS_PORT2}" ]]; then
+            sudo ufw allow ${HTTPS_PORT2}/tcp
+        fi
         
         log_info "Firewall configured ✅"
     else
