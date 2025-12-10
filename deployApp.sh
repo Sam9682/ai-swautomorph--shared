@@ -206,7 +206,7 @@ deploy_services() {
     sleep 30
     
     # Check service health
-    if docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+    if docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up"; then
         log_info "Services deployed successfully ✅"
     else
         log_error "Some services failed to start"
@@ -220,7 +220,7 @@ verify_deployment() {
     log_info "Verifying deployment..."
     
     # Check if services are running
-    if ! docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+    if ! docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up"; then
         log_error "Services are not running properly"
         return 1
     fi
@@ -374,8 +374,7 @@ check_status() {
     docker_status="IS_NOT_RUNNING"
     docker_ports="[]"
     
-    # Check if containers with name pattern exist and are running
-    if docker container ls --filter "status=running" --format "{{.Names}}" | grep -q "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$"; then
+    if docker container ls --filter "status=running" --format "{{.Names}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$"; then
         docker_status="IS_RUNNING"
         # Extract all ports from running containers matching the pattern
         all_ports=$(docker container ls --filter "status=running" --format "{{.Names}} {{.Ports}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n | uniq)
