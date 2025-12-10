@@ -45,7 +45,7 @@ EOF
 chmod 600 .env.prod
 ```
 
-#### 3. Generate Nginx Configuration
+#### 3. Generate Nginx Configuration ONLY if conf/nginx.conf.template file exists
 ```bash
 sed "s/\${USER_ID}/$USER_ID/g" conf/nginx.conf.template > conf/nginx.conf
 ```
@@ -88,8 +88,6 @@ docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
 docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
 
-# Wait
-sleep 30
 ```
 
 #### 6. Verify Deployment
@@ -110,22 +108,6 @@ if command -v ufw &> /dev/null; then
     sudo ufw allow ${HTTPS_PORT}/tcp
     sudo ufw --force enable
 fi
-```
-
-#### 8. Create Backup Script
-```bash
-mkdir -p scripts
-cat > ./scripts/backup.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="$BACKUP_DIR/ai_haccp_backup_$DATE"
-mkdir -p "$BACKUP_DIR"
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
-docker cp $(docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
-ls -t "$BACKUP_DIR"/ai_haccp_backup_*.db | tail -n +8 | xargs -r rm
-EOF
-chmod +x ./scripts/backup.sh
 ```
 
 **After completion, verify:**
