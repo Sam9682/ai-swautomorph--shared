@@ -219,8 +219,9 @@ deploy_services() {
 verify_deployment() {
     log_info "Verifying deployment..."
     
-    # Check if services are running
-    if ! docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up"; then
+    # Check if services are running by name pattern
+    containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
+    if [[ -z "$containers" ]]; then
         log_error "Services are not running properly"
         return 1
     fi
@@ -293,7 +294,7 @@ EOF
 }
 
 # Main deployment process
-start() {
+start_services() {
     log_info "Starting ${NAME_OF_APPLICATION} production deployment..."
     show_environment
     check_prerequisites
@@ -329,21 +330,40 @@ start() {
 # Stop services
 stop_services() {
     log_info "Stopping ${NAME_OF_APPLICATION} services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down
-    log_info "Services stopped successfully ✅"
+    # Stop containers by name pattern
+    containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
+    if [[ -n "$containers" ]]; then
+        docker stop $containers
+        docker rm $containers
+        log_info "Services stopped successfully ✅"
+    else
+        log_warn "No running containers found for USER_ID: $USER_ID"
+    fi
 }
 
 # Restart services
 restart_services() {
     log_info "Restarting ${NAME_OF_APPLICATION} services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml restarttart
-    log_info "Services restarted successfully ✅"
+    # Restart containers by name pattern
+    containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
+    if [[ -n "$containers" ]]; then
+        docker restart $containers
+        log_info "Services restarted successfully ✅"
+    else
+        log_warn "No running containers found for USER_ID: $USER_ID"
+    fi
 }
 
 # Show logs
 show_logs() {
     log_info "Showing ${NAME_OF_APPLICATION} service logs..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -f docker-compose.yml logs -f
+    # Show logs for containers by name pattern
+    containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
+    if [[ -n "$containers" ]]; then
+        docker logs -f $containers
+    else
+        log_warn "No running containers found for USER_ID: $USER_ID"
+    fi
 }
 
 # Show usage help
@@ -434,7 +454,7 @@ main() {
             echo "🚀 ${NAME_OF_APPLICATION} Production Deployment"
             echo "=================================="
 
-            start
+            start_services
             exit 0
             ;;
         "help"|"--help"|"-h")
