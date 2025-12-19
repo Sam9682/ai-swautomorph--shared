@@ -360,7 +360,13 @@ show_logs() {
     # Show logs for containers by name pattern
     containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
     if [[ -n "$containers" ]]; then
-        docker logs -f $containers
+        # Show logs for each container separately
+        for container in $containers; do
+            container_name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\///')
+            echo "=== Logs for container: $container_name ==="
+            docker logs --tail=50 $container
+            echo ""
+        done
     else
         log_warn "No running containers found for USER_ID: $USER_ID"
     fi
