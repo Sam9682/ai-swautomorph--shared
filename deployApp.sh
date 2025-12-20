@@ -137,16 +137,51 @@ setup_ssl() {
     
     if [[ ! -d "ssl" ]]; then
         mkdir -p ssl
+    fi
+    
+    # Remove any existing directories that should be files
+    if [[ -d "ssl/fullchain.pem" ]]; then
+        log_warn "Removing directory ssl/fullchain.pem (should be a file)..."
+        rm -rf ssl/fullchain.pem
+    fi
+    
+    if [[ -d "ssl/privkey.pem" ]]; then
+        log_warn "Removing directory ssl/privkey.pem (should be a file)..."
+        rm -rf ssl/privkey.pem
+    fi
         
-        # Check for existing certificates in ~/.ssh/
-        if [[ -f "~/.ssh/STAR_swautomorph_com.crt" && -f "~/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
+        # Check for existing certificates in ~/.ssh/ or current ssl/ directory
+        if [[ -f "$HOME/.ssh/STAR_swautomorph_com.crt" && -f "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
             log_info "Using existing certificates from ~/.ssh/..."
             
+            # Remove any existing directories with same names
+            rm -rf ssl/fullchain.pem ssl/privkey.pem
+            
             # Copy existing certificates
-            cp ~/.ssh/STAR_swautomorph_com.crt ssl/fullchain.pem
-            cp ~/.ssh/privateKey_STAR_swautomorph_com.key ssl/privkey.pem
+            cp "$HOME/.ssh/STAR_swautomorph_com.crt" ssl/fullchain.pem
+            cp "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ssl/privkey.pem
+            
+            # Set proper permissions
+            chmod 644 ssl/fullchain.pem
+            chmod 600 ssl/privkey.pem
             
             log_info "Existing certificates copied ✅"
+        # Check for certificates in current ssl directory
+        elif [[ -f "ssl/STAR_swautomorph_com.crt" && -f "ssl/privateKey_STAR_swautomorph_com.key" ]]; then
+            log_info "Using existing certificates from ssl/ directory..."
+            
+            # Remove any existing directories with same names
+            rm -rf ssl/fullchain.pem ssl/privkey.pem
+            
+            # Copy existing certificates
+            cp ssl/STAR_swautomorph_com.crt ssl/fullchain.pem
+            cp ssl/privateKey_STAR_swautomorph_com.key ssl/privkey.pem
+            
+            # Set proper permissions
+            chmod 644 ssl/fullchain.pem
+            chmod 600 ssl/privkey.pem
+            
+            log_info "Local certificates copied ✅"
         # Check if certbot is installed
         elif command -v certbot &> /dev/null; then
             log_info "Obtaining SSL certificate for $DOMAIN..."
@@ -180,7 +215,52 @@ setup_ssl() {
             log_warn "Self-signed certificate created. Replace with real certificate for production!"
         fi
     else
-        log_info "SSL directory already exists, skipping certificate generation"
+        log_info "SSL directory already exists, checking certificate files..."
+        
+        # Ensure existing certificates are files, not directories
+        if [[ -d "ssl/fullchain.pem" ]]; then
+            log_warn "Removing directory ssl/fullchain.pem (should be a file)..."
+            rm -rf ssl/fullchain.pem
+        fi
+        
+        if [[ -d "ssl/privkey.pem" ]]; then
+            log_warn "Removing directory ssl/privkey.pem (should be a file)..."
+            rm -rf ssl/privkey.pem
+        fi
+        
+        # If certificates don't exist as files, try to copy them
+        if [[ ! -f "ssl/fullchain.pem" || ! -f "ssl/privkey.pem" ]]; then
+            log_info "SSL certificate files missing, attempting to copy..."
+            
+            if [[ -f "$HOME/.ssh/STAR_swautomorph_com.crt" && -f "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
+                cp "$HOME/.ssh/STAR_swautomorph_com.crt" ssl/fullchain.pem
+                cp "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ssl/privkey.pem
+                chmod 644 ssl/fullchain.pem
+                chmod 600 ssl/privkey.pem
+                log_info "Certificates copied from ~/.ssh/ ✅"
+            elif [[ -f "ssl/STAR_swautomorph_com.crt" && -f "ssl/privateKey_STAR_swautomorph_com.key" ]]; then
+                cp ssl/STAR_swautomorph_com.crt ssl/fullchain.pem
+                cp ssl/privateKey_STAR_swautomorph_com.key ssl/privkey.pem
+                chmod 644 ssl/fullchain.pem
+                chmod 600 ssl/privkey.pem
+                log_info "Certificates copied from ssl/ directory ✅"
+            fi
+        fi
+    fi
+    
+    # Final verification that certificates are files
+    if [[ -f "ssl/fullchain.pem" && -f "ssl/privkey.pem" ]]; then
+        log_info "SSL certificates verified as files ✅"
+        ls -la ssl/fullchain.pem ssl/privkey.pem
+    else
+        log_error "SSL certificates are not properly configured as files!"
+        if [[ -d "ssl/fullchain.pem" ]]; then
+            log_error "ssl/fullchain.pem is a directory, not a file"
+        fi
+        if [[ -d "ssl/privkey.pem" ]]; then
+            log_error "ssl/privkey.pem is a directory, not a file"
+        fi
+        return 1
     fi
 }
 
