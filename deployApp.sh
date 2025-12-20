@@ -121,15 +121,13 @@ EOF
 
 # Generate nginx configuration from template
 generate_nginx_config() {
-    log_info "Generating nginx configuration..."
-    
     if [[ -f "conf/nginx.conf.template" ]]; then
+        log_info "Generating nginx configuration..."
         # Replace ${USER_ID} with actual USER_ID value
         sed "s/\${USER_ID}/$USER_ID/g" conf/nginx.conf.template > conf/nginx.conf
         log_info "nginx.conf generated from template ✅"
     else
-        log_error "nginx.conf.template not found in conf/ directory"
-        exit 1
+        log_warn "nginx.conf.template not found, skipping nginx configuration"
     fi
 }
 
