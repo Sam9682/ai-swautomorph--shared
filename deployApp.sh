@@ -139,12 +139,12 @@ setup_ssl() {
         mkdir -p ssl
         
         # Check for existing certificates in ~/.ssh/
-        if [[ -f "~/.ssh/www_swautomorph_com.crt" && -f "~/.ssh/privateKey_automorph_simple.key" ]]; then
+        if [[ -f "~/.ssh/STAR_swautomorph_com.crt" && -f "~/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
             log_info "Using existing certificates from ~/.ssh/..."
             
             # Copy existing certificates
-            cp ~/.ssh/www_swautomorph_com.crt ssl/fullchain.pem
-            cp ~/.ssh/privateKey_automorph_simple.key ssl/privkey.pem
+            cp ~/.ssh/STAR_swautomorph_com.crt ssl/fullchain.pem
+            cp ~/.ssh/privateKey_STAR_swautomorph_com.key ssl/privkey.pem
             
             log_info "Existing certificates copied ✅"
         # Check if certbot is installed
@@ -162,9 +162,9 @@ setup_ssl() {
                 --non-interactive \
                 --quiet
             
-            # Copy certificates
-            sudo cp "~/.ssh/www_swautomorph_com.crt" ssl/
-            sudo cp "~/.ssh/privateKey_automorph_simple.key" ssl/
+            # Copy certificates from letsencrypt
+            sudo cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ssl/
+            sudo cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ssl/
             sudo chown -R $USER:$USER ssl/
             
             log_info "SSL certificates obtained ✅"
