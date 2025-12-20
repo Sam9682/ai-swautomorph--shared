@@ -149,9 +149,9 @@ setup_ssl() {
         log_warn "Removing directory ssl/privkey.pem (should be a file)..."
         rm -rf ssl/privkey.pem
     fi
-        
-        # Check for existing certificates in ~/.ssh/ or current ssl/ directory
-        if [[ -f "$HOME/.ssh/STAR_swautomorph_com.crt" && -f "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
+    
+    # Check for existing certificates in ~/.ssh/ or current ssl/ directory
+    if [[ -f "$HOME/.ssh/STAR_swautomorph_com.crt" && -f "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
             log_info "Using existing certificates from ~/.ssh/..."
             
             # Remove any existing directories with same names
@@ -214,39 +214,6 @@ setup_ssl() {
             
             log_warn "Self-signed certificate created. Replace with real certificate for production!"
         fi
-    else
-        log_info "SSL directory already exists, checking certificate files..."
-        
-        # Ensure existing certificates are files, not directories
-        if [[ -d "ssl/fullchain.pem" ]]; then
-            log_warn "Removing directory ssl/fullchain.pem (should be a file)..."
-            rm -rf ssl/fullchain.pem
-        fi
-        
-        if [[ -d "ssl/privkey.pem" ]]; then
-            log_warn "Removing directory ssl/privkey.pem (should be a file)..."
-            rm -rf ssl/privkey.pem
-        fi
-        
-        # If certificates don't exist as files, try to copy them
-        if [[ ! -f "ssl/fullchain.pem" || ! -f "ssl/privkey.pem" ]]; then
-            log_info "SSL certificate files missing, attempting to copy..."
-            
-            if [[ -f "$HOME/.ssh/STAR_swautomorph_com.crt" && -f "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
-                cp "$HOME/.ssh/STAR_swautomorph_com.crt" ssl/fullchain.pem
-                cp "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ssl/privkey.pem
-                chmod 644 ssl/fullchain.pem
-                chmod 600 ssl/privkey.pem
-                log_info "Certificates copied from ~/.ssh/ ✅"
-            elif [[ -f "ssl/STAR_swautomorph_com.crt" && -f "ssl/privateKey_STAR_swautomorph_com.key" ]]; then
-                cp ssl/STAR_swautomorph_com.crt ssl/fullchain.pem
-                cp ssl/privateKey_STAR_swautomorph_com.key ssl/privkey.pem
-                chmod 644 ssl/fullchain.pem
-                chmod 600 ssl/privkey.pem
-                log_info "Certificates copied from ssl/ directory ✅"
-            fi
-        fi
-    fi
     
     # Final verification that certificates are files
     if [[ -f "ssl/fullchain.pem" && -f "ssl/privkey.pem" ]]; then
