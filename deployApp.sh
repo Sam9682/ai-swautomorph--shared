@@ -362,7 +362,7 @@ show_logs() {
     if [[ -n "$containers" ]]; then
         # Show logs for each container separately
         for container in $containers; do
-            container_name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\///')
+            container_name=$(docker inspect --format='{{.Name}}' $container | cut -c2-)
             echo "=== Logs for container: $container_name ==="
             docker logs --tail=50 $container
             echo ""
