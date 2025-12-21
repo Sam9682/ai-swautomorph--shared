@@ -24,7 +24,7 @@ The deployment script loads configuration from `./conf/deploy.ini` which should 
 Port calculation formula:
 ```
 PORT_RANGE_BEGIN = RANGE_START + USER_ID * RANGE_RESERVED
-HTTP_PORT = PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * 2
+HTTP_PORT = PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * RANGE_PORTS_PER_APPLICATION
 HTTPS_PORT = HTTP_PORT + 1
 ```
 
