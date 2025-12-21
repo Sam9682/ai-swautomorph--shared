@@ -28,6 +28,8 @@ calculate_ports() {
     PORT_RANGE_BEGIN=$((RANGE_START + USER_ID * RANGE_RESERVED))
     HTTP_PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * 2))
     HTTPS_PORT=$((HTTP_PORT + 1))
+    HTTP_PORT2=$((HTTPS_PORT + 1))
+    HTTPS_PORT2=$((HTTP_PORT2 + 1))
 }
 
 # Display environment variables for operations
@@ -39,7 +41,9 @@ show_environment() {
     echo "  USER_NAME=${USER_NAME}"
     echo "  USER_EMAIL=${USER_EMAIL}"
     echo "  HTTP_PORT=${HTTP_PORT}"
+    echo "  HTTP_PORT2=${HTTP_PORT2}"
     echo "  HTTPS_PORT=${HTTPS_PORT}"
+    echo "  HTTPS_PORT2=${HTTPS_PORT2}"
     echo ""
 }
 
@@ -236,15 +240,15 @@ deploy_services() {
     log_info "Building and deploying services..."
 
     # Stop existing services
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down 2>/dev/null || true
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down 2>/dev/null || true
     
     # Build images
     log_info "Building Docker images..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
     
     # Start services
     log_info "Starting production services..."
-    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file "$ENV_FILE" up -d
+    HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file "$ENV_FILE" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to start..."
@@ -297,6 +301,10 @@ setup_firewall() {
         if [[ -n "${HTTPS_PORT2}" ]]; then
             sudo ufw allow ${HTTPS_PORT2}/tcp
         fi
+        # if  ${HTTP_PORT2} exist then allow it
+        if [[ -n "${HTTP_PORT2}" ]]; then
+            sudo ufw allow ${HTTP_PORT2}/tcp
+        fi
         
         log_info "Firewall configured ✅"
     else
@@ -319,7 +327,7 @@ BACKUP_FILE="$BACKUP_DIR/ai_haccp_backup_$DATE"
 mkdir -p "$BACKUP_DIR"
 
 echo "Creating backup: $BACKUP_FILE"
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
+HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
 docker cp $(docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps -q api):/tmp/backup.db "$BACKUP_FILE.db"
 
 if [[ $? -eq 0 ]]; then
@@ -440,7 +448,9 @@ check_status() {
     # Get actual ports
     actual_http_port="$HTTP_PORT"
     actual_https_port="$HTTPS_PORT"
-    
+    actual_http_port2="$HTTP_PORT2"
+    actual_https_port2="$HTTPS_PORT2"
+
     # Check docker status using docker container ls
     docker_status="IS_NOT_RUNNING"
     docker_ports="[]"
@@ -463,6 +473,8 @@ check_status() {
           --arg user_email "$USER_EMAIL" \
           --arg http_port "$actual_http_port" \
           --arg https_port "$actual_https_port" \
+          --arg http_port2 "$actual_http_port2" \
+          --arg https_port2 "$actual_https_port2" \
           --arg docker_status "$docker_status" \
           --argjson docker_ports "$docker_ports" \
           --argjson git_remotes "$git_remotes" \
@@ -472,7 +484,9 @@ check_status() {
               "USER_NAME": $user_name,
               "USER_EMAIL": $user_email,
               "HTTP_PORT": $http_port,
-              "HTTPS_PORT": $https_port
+              "HTTPS_PORT": $https_port,
+              "HTTP_PORT2": $http_port2,
+              "HTTPS_PORT2": $https_port2
             },
             "docker_compose_ps": $docker_status,
             "docker_ports": $docker_ports,
