@@ -277,7 +277,7 @@ verify_deployment() {
     
     # Test API health endpoint
     sleep 10
-    if curl -f -s "http://www.swautomorph.com:${HTTP_PORT}/health" > /dev/null; then
+    if curl -f -s "https://www.swautomorph.com:${HTTPS_PORT}/" > /dev/null; then
         log_info "API health check passed ✅"
     else
         log_warn "API health check failed, but services are running"
