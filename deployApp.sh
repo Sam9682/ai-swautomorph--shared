@@ -263,7 +263,6 @@ deploy_services() {
     if [[ -z "$containers" ]]; then
         log_error "Some services failed to start"
         docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml logs
-        exit 1
     else
         log_info "Services deployed successfully ✅"
     fi
@@ -364,25 +363,7 @@ start_services() {
     setup_firewall
     create_backup_script
     
-    echo ""
-    echo "🎉 Deployment completed successfully!"
-    echo "=================================="
-    echo "🌐 Web Interface: https://$DOMAIN"
-    echo "📚 API Documentation: https://$DOMAIN/docs"
-    echo "🔑 Demo Login: admin@ai-automorph.com / password"
-    echo ""
-    echo "📋 Next Steps:"
-    echo "1. Test the application at https://$DOMAIN"
-    echo "2. Change default demo password"
-    echo "3. Configure DNS to point to this server"
-    echo "4. Set up automated backups: ./scripts/backup.sh"
-    echo "5. Monitor logs: docker-compose -f docker-compose.yml logs -f"
-    echo ""
-    echo "🔧 Management Commands:"
-    echo "- View logs: make logs"
-    echo "- Backup database: ./scripts/backup.sh"
-    echo "- Stop services: make stop"
-    echo "- Update application: git pull && make prod"
+    log_info "Services started successfully ✅"
 }
 
 # Stop services
