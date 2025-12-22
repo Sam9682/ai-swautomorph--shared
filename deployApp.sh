@@ -257,14 +257,15 @@ deploy_services() {
     # Wait for services to be ready
     log_info "Waiting for services to start..."
     sleep 3
-    
+
     # Check service health
-    if docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up"; then
-        log_info "Services deployed successfully ✅"
-    else
+    containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
+    if [[ -z "$containers" ]]; then
         log_error "Some services failed to start"
         docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml logs
         exit 1
+    else
+        log_info "Services deployed successfully ✅"
     fi
 }
 
