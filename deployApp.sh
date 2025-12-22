@@ -252,7 +252,7 @@ deploy_services() {
     
     # Wait for services to be ready
     log_info "Waiting for services to start..."
-    sleep 30
+    sleep 3
     
     # Check service health
     if docker-compose -p "-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep "Up"; then
