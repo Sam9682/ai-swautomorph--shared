@@ -13,6 +13,10 @@ USER_NAME=${3:-"admin"}
 USER_EMAIL=${4:-"admin@swautomorph.com"}
 DESCRIPTION=${5:-"Basic Admin User"}
 
+RANGE_START=6000
+RANGE_RESERVED=100
+RANGE_PORTS_PER_APPLICATION=4
+
 # Configuration
 DOMAIN=${DOMAIN:-"www.swautomorph.com"}
 EMAIL=${EMAIL:-"admin@swautomorph.com"}
