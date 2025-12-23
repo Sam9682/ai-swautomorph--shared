@@ -74,30 +74,28 @@ else
 fi
 ```
 
-#### 5. Deploy Services
+#### 5. Build Services
 ```bash
-# Stop existing
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
-docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down 2>/dev/null || true
 
 # Build
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
 docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
 
+#### 6. Start Services
 # Start
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
 docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
 
 ```
 
-#### 6. Verify Deployment
+#### 7. Verify Deployment
 ```bash
 docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"
 sleep 10
 curl -f -s "http://www.swautomorph.com:${HTTP_PORT}/health" || true
 ```
 
-#### 7. Configure Firewall (if UFW available)
+#### 8. Configure Firewall (if UFW available)
 ```bash
 if command -v ufw &> /dev/null; then
     sudo ufw --force reset
