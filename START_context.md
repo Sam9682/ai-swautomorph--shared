@@ -37,7 +37,7 @@ HTTPS_PORT2=$(($HTTP_PORT2 + 1))
 
 #### 4. Generate Nginx Configuration. If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step.
 you can use the following command:
-sed "s/$USER_ID/$USER_ID/g" conf/nginx.conf.template > conf/nginx.conf
+sed "s/\$\U\S\E\R\_\I\D/{$USER_ID}/g" conf/nginx.conf.template > conf/nginx.conf
 
 #### 5. Setup SSL Certificates. If exist, copy www_swautomorph_com.crt and privateKey_automorph_simple.key. You can use the following commands:
 mkdir -p ssl
