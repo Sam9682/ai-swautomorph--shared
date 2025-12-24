@@ -11,58 +11,61 @@ Load configuration from `./conf/deploy.ini` which contains:
 - RANGE_START
 - RANGE_RESERVED
 - APPLICATION_IDENTITY_NUMBER
+- RANGE_PORTS_PER_APPLICATION
 
 **Port Calculation Formula:**
 ```
 PORT_RANGE_BEGIN = RANGE_START + USER_ID * RANGE_RESERVED
 HTTP_PORT = PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * RANGE_PORTS_PER_APPLICATION
 HTTPS_PORT = HTTP_PORT + 1
+HTTP_PORT2=$((HTTPS_PORT + 1))
+HTTPS_PORT2=$((HTTP_PORT2 + 1))
 ```
 
 **Execute these steps:**
 
-#### 1. Calculate Ports
+#### 1. Calculate HTTP Ports, which are the ports used by the docker containers of the application
+Use the following command to calculate the docker ports of the running application to stop:
 ```bash
 # Load configuration
 source ./conf/deploy.ini
-
 # Ensure USER_ID is numeric
 if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
-
 # Calculate ports
-PORT_RANGE_BEGIN=$((RANGE_START + USER_ID * RANGE_RESERVED))
-HTTP_PORT=$((PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * RANGE_PORTS_PER_APPLICATION))
-HTTPS_PORT=$((HTTP_PORT + 1))
+PORT_RANGE_BEGIN = RANGE_START + USER_ID * RANGE_RESERVED
+HTTP_PORT = PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * RANGE_PORTS_PER_APPLICATION
+HTTPS_PORT = HTTP_PORT + 1
+HTTP_PORT2=$((HTTPS_PORT + 1))
+HTTPS_PORT2=$((HTTP_PORT2 + 1))
 ```
 
-#### 2. Check Docker Compose Status
+#### 2. Check the Status of the application using docker-compose command
+Use the following commands to get the status of the application:
 ```bash
+# Check docker status using docker container ls
 docker_status="IS_NOT_RUNNING"
 docker_ports="[]"
 
-if HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
-   docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"; then
+if docker container ls --filter "status=running" --format "{{.Names}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$"; then
     docker_status="IS_RUNNING"
-    
-    # Extract all ports
-    all_ports=$(HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
-                docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | \
-                grep "Up" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n)
-    
+    # Extract all ports from running containers matching the pattern
+    all_ports=$(docker container ls --filter "status=running" --format "{{.Names}} {{.Ports}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n | uniq)
     if [[ -n "$all_ports" ]]; then
         docker_ports=$(echo "$all_ports" | jq -R . | jq -s .)
     fi
 fi
 ```
 
-#### 3. Get Git Remote URLs
+#### 3. Get Git Remote  for the application
+Use the following commands to list the git remote reporsitories: 
 ```bash
 git_remotes=$(git remote -v 2>/dev/null | awk '{print $2}' | sort -u | jq -R . | jq -s . 2>/dev/null || echo '[]')
 ```
 
 #### 4. Output JSON
+Once all informations are gathered using previous step, then display the results using the following command:
 ```bash
 jq -n --arg user_id "$USER_ID" \
       --arg user_name "$USER_NAME" \
