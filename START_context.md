@@ -1,28 +1,5 @@
 Please deploy and start the application by executing the following steps in sequence. Use the provided parameters and ensure all prerequisites are met before proceeding.
 
-**Parameters:**
-- USER_ID: {USER_ID}
-- USER_NAME: {USER_NAME}
-- USER_EMAIL: {USER_EMAIL}
-- DESCRIPTION: {DESCRIPTION}
-
-**Configuration:**
-Load configuration from `./conf/deploy.ini` which contains:
-- NAME_OF_APPLICATION
-- RANGE_START
-- RANGE_RESERVED
-- APPLICATION_IDENTITY_NUMBER
-- RANGE_PORTS_PER_APPLICATION
-
-**Port Calculation Formula:**
-```
-PORT_RANGE_BEGIN = RANGE_START + USER_ID * RANGE_RESERVED
-HTTP_PORT = PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * RANGE_PORTS_PER_APPLICATION
-HTTPS_PORT = HTTP_PORT + 1
-HTTP_PORT2=$((HTTPS_PORT + 1))
-HTTPS_PORT2=$((HTTP_PORT2 + 1))
-```
-
 **Execute these steps:**
 
 #### 1. Check Prerequisites, docker and docker-compose have to be installed on the current server
@@ -47,13 +24,30 @@ EOF
 chmod 600 .env.prod
 ```
 
-#### 3. Generate Nginx Configuration ONLY if conf/nginx.conf.template file exists. Otherwise skip this step
+#### 3. Calculate HTTP Ports, which are the ports used by the docker containers of the application
+Use the following command to calculate the docker ports of the running application to stop (it uses the env variables called $NAME_OF_APPLICATION and $USER_ID):
+```bash
+# Load configuration
+source ./conf/deploy.ini
+# Ensure USER_ID is numeric
+if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
+    USER_ID=0
+fi
+# Calculate ports
+PORT_RANGE_BEGIN = RANGE_START + USER_ID * RANGE_RESERVED
+HTTP_PORT = PORT_RANGE_BEGIN + APPLICATION_IDENTITY_NUMBER * RANGE_PORTS_PER_APPLICATION
+HTTPS_PORT = HTTP_PORT + 1
+HTTP_PORT2=$((HTTPS_PORT + 1))
+HTTPS_PORT2=$((HTTP_PORT2 + 1))
+```
+
+#### 4. Generate Nginx Configuration ONLY if conf/nginx.conf.template file exists. Otherwise skip this step
 use nginx.conf.template to create nginx.conf and replace ${USER_ID} by its value:
 ```bash
 sed "s/\${USER_ID}/$USER_ID/g" conf/nginx.conf.template > conf/nginx.conf
 ```
 
-#### 4. Setup SSL Certificates. If exist, copy www_swautomorph_com.crt and privateKey_automorph_simple.key
+#### 5. Setup SSL Certificates. If exist, copy www_swautomorph_com.crt and privateKey_automorph_simple.key
 You can use the following commands:
 ```bash
 mkdir -p ssl
@@ -77,7 +71,7 @@ else
 fi
 ```
 
-#### 5. Build Services using docker-compose command
+#### 6. Build Services using docker-compose command
 Use docker-compose command to build the service
 ```bash
 # Build
@@ -85,7 +79,7 @@ HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
 docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
 ```
 
-#### 6. Start Services using docker-compose command
+#### 7. Start Services using docker-compose command
 Use docker-compose command to start the service
 ```bash
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID \
@@ -93,7 +87,7 @@ docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.
 
 ```
 
-#### 7. Verify the recent Deployment using docker-compose command
+#### 8. Verify the recent Deployment using docker-compose command
 Use docker-compose command to check the status of the service
 ```bash
 docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml ps | grep -q "Up"
@@ -101,7 +95,7 @@ sleep 10
 curl -f -s "http://www.swautomorph.com:${HTTP_PORT}" || true
 ```
 
-#### 8. Configure Firewall (UFW has to be available)
+#### 9. Configure Firewall (UFW has to be available)
 Use the following commands to allow incoming socket flow for the service:
 ```bash
 if command -v ufw &> /dev/null; then
