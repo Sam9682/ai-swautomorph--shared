@@ -41,8 +41,9 @@ HTTP_PORT2=$((HTTPS_PORT + 1))
 HTTPS_PORT2=$((HTTP_PORT2 + 1))
 ```
 
-#### 4. Generate Nginx Configuration ONLY if conf/nginx.conf.template file exists. Otherwise skip this step
-use nginx.conf.template to create nginx.conf and replace ${USER_ID} by its value:
+#### 4. Generate Nginx Configuration. 
+If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf and replace ${USER_ID} by its value. If the file does not exists, then go to next step.
+you can use the following command:
 ```bash
 sed "s/\${USER_ID}/$USER_ID/g" conf/nginx.conf.template > conf/nginx.conf
 ```
