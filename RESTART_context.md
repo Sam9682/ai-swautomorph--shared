@@ -1,5 +1,7 @@
 Please restart all running Docker containers for the specified user instance without rebuilding images.
-IMPORTANT : all commands have to be executed in the application located {APPLICATION_FOLDER}.
+IMPORTANT : 
+- all commands have to be executed in the application located {APPLICATION_FOLDER}.
+- Execute all steps to deploy with the environment variable USER_ID={USER_ID}
 
 #### 1. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
 
@@ -24,4 +26,4 @@ docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.
 - No images were rebuilt
 - Report the final status
 
-**Summary:** Execute the restart command for USER_ID={USER_ID} and confirm all services are running again.
+**Summary:** confirm all services are running again.
