@@ -14,6 +14,7 @@ Your goal is to:
   - rebuild and redeploy the running application with docker-compose.
 USER REQUEST (what must be changed in the app):
 \"\"\"{message}\"\"\"
+IMPORTANT : all commands have to be executed in the application located {app_folder}.
 Follow these steps EXACTLY:
 1. Change directory to the repository:
    cd {repo_dir}
