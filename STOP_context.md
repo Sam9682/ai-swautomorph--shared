@@ -1,5 +1,5 @@
 Please stop all running Docker containers for the specified user instance by executing the following steps.
-IMPORTANT : all commands have to be executed in the application located {application_folder}.
+IMPORTANT : all commands have to be executed in the application located {APPLICATION_FOLDER}.
 
 **Parameters:**
 - USER_ID: {USER_ID}
