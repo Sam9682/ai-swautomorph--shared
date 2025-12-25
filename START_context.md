@@ -31,14 +31,14 @@ source ./conf/deploy.ini
 if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
-PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
-HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
-HTTPS_PORT=$((HTTP_PORT+1))
-HTTP_PORT2=$(($HTTPS_PORT+1))
-HTTPS_PORT2=$(($HTTP_PORT2+1))
+export PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
+export HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
+export HTTPS_PORT=$((HTTP_PORT+1))
+export HTTP_PORT2=$(($HTTPS_PORT+1))
+export HTTPS_PORT2=$(($HTTP_PORT2+1))
 
-#### 4. Generate Nginx Configuration. If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step.
-you can use the following command:
+#### 4. Generate Nginx Configuration. If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step. You can use the following command:
+
 sed "s/\$\U\S\E\R\_\I\D/{$USER_ID}/g" conf/nginx.conf.template > conf/nginx.conf
 
 #### 5. Setup SSL Certificates. If exist, copy www_swautomorph_com.crt and privateKey_automorph_simple.key. You can use the following commands:
@@ -59,22 +59,16 @@ else
         -subj "/C=US/ST=State/L=City/O=Organization/CN=www.swautomorph.com"
 fi
 
-#### 6. Build the docker service using the following command:
+#### 6. Start the docker services using following command (The HTTP_PORT and HTTPS_PORT have been calculated in step 3):
 
-docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml build --no-cache --build-arg PIP_UPGRADE=1
-(The HTTP_PORT and HTTPS_PORT have been calculated in step 3)
+HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
 
-#### 7. Start the docker services using following command:
 
-docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
-(The HTTP_PORT and HTTPS_PORT have been calculated in step 3)
+#### 7. Verify the docker service is up and running using the following command (The HTTP_PORT and HTTPS_PORT have been calculated in step 3):
 
-#### 8. Verify the docker service is up and running using the following command:
+curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
 
-curl -f -s "http://www.swautomorph.com:${HTTP_PORT}" || true
-(The HTTP_PORT and HTTPS_PORT have been calculated in step 3)
-
-#### 9. Configure Firewall (UFW has to be available). Use the following commands to allow incoming socket flow for the service:
+#### 7. Configure Firewall (UFW has to be available). Use the following commands to allow incoming socket flow for the service:
 
 if command -v ufw &> /dev/null; then
     sudo ufw --force reset

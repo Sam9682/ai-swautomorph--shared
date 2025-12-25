@@ -10,34 +10,31 @@ source ./conf/deploy.ini
 if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
-PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
-HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
-HTTPS_PORT=$((HTTP_PORT+1))
-HTTP_PORT2=$(($HTTPS_PORT+1))
-HTTPS_PORT2=$(($HTTP_PORT2+1))
+export PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
+export HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
+export HTTPS_PORT=$((HTTP_PORT+1))
+export HTTP_PORT2=$(($HTTPS_PORT+1))
+export HTTPS_PORT2=$(($HTTP_PORT2+1))
 
-#### 2. Check the Status of the application using docker-compose command
-Use the following commands to get the status of the application:
+#### 2. Check the Status of the application using docker-compose command. Use the following commands to get the status of the application:
 
-docker_status="IS_NOT_RUNNING"
-docker_ports="[]"
+export docker_status="IS_NOT_RUNNING"
+export docker_ports="[]"
 
 if docker container ls --filter "status=running" --format "{{.Names}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$"; then
-    docker_status="IS_RUNNING"
-    all_ports=$(docker container ls --filter "status=running" --format "{{.Names}} {{.Ports}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n | uniq)
+    export docker_status="IS_RUNNING"
+    export all_ports=$(docker container ls --filter "status=running" --format "{{.Names}} {{.Ports}}" | grep "^${NAME_OF_APPLICATION}-.*-${USER_ID}-.*$" | grep -o '0.0.0.0:[0-9]*' | cut -d: -f2 | sort -n | uniq)
     if [[ -n "$all_ports" ]]; then
-        docker_ports=$(echo "$all_ports" | jq -R . | jq -s .)
+        export docker_ports=$(echo "$all_ports" | jq -R . | jq -s .)
     fi
 fi
 
 
-#### 3. Get Git Remote  for the application
-Use the following commands to list the git remote reporsitories: 
-git_remotes=$(git remote -v 2>/dev/null | awk '{print $2}' | sort -u | jq -R . | jq -s . 2>/dev/null || echo '[]')
+#### 3. Get Git Remote  for the application. Use the following commands to list the git remote reporsitories: 
 
+export git_remotes=$(git remote -v 2>/dev/null | awk '{print $2}' | sort -u | jq -R . | jq -s . 2>/dev/null || echo '[]')
 
-#### 4. Output JSON
-Once all informations are gathered using previous step, then display the results using the following command:
+#### 4. Output result as a JSON format. Once all informations are gathered using previous step, then display the results using the following command:
 
 jq -n --arg user_id "$USER_ID" \
       --arg user_name "$USER_NAME" \
@@ -60,8 +57,7 @@ jq -n --arg user_id "$USER_ID" \
         "git_remote": $git_remotes
       }'
 
-
-**Expected JSON Output Format:**
+**Summary:** return the JSON output with all service information. The Expected JSON Output Format:
 {
   "environment_vars": {
     "USER_ID": "...",
@@ -74,5 +70,3 @@ jq -n --arg user_id "$USER_ID" \
   "docker_ports": [...],
   "git_remote": [...]
 }
-
-**Summary:** return the JSON output with all service information.
