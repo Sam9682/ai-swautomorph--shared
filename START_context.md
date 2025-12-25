@@ -29,11 +29,11 @@ source ./conf/deploy.ini
 if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
-PORT_RANGE_BEGIN = $RANGE_START + $USER_ID * $RANGE_RESERVED
-HTTP_PORT = $PORT_RANGE_BEGIN + $APPLICATION_IDENTITY_NUMBER * $RANGE_PORTS_PER_APPLICATION
-HTTPS_PORT = $HTTP_PORT + 1
-HTTP_PORT2=$(($HTTPS_PORT + 1))
-HTTPS_PORT2=$(($HTTP_PORT2 + 1))
+PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
+HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
+HTTPS_PORT=$((HTTP_PORT+1))
+HTTP_PORT2=$(($HTTPS_PORT+1))
+HTTPS_PORT2=$(($HTTP_PORT2+1))
 
 #### 4. Generate Nginx Configuration. If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step.
 you can use the following command:
