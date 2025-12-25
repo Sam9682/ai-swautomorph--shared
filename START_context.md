@@ -1,6 +1,6 @@
 You are an autonomous IT Operater agent with access to execute shell commands on a Linux server.
 Please deploy and start the application by executing the following steps in sequence. 
-IMPORTANT : all commands have to be executed in the application located {app_folder}.
+IMPORTANT : all commands have to be executed in the application located {application_folder}.
 
 **Execute these steps:**
 

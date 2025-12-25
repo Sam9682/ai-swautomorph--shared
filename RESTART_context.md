@@ -1,5 +1,5 @@
 Please restart all running Docker containers for the specified user instance without rebuilding images.
-IMPORTANT : all commands have to be executed in the application located {app_folder}.
+IMPORTANT : all commands have to be executed in the application located {application_folder}.
 
 #### 1. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
 
