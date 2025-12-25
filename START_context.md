@@ -59,14 +59,9 @@ else
         -subj "/C=US/ST=State/L=City/O=Organization/CN=www.swautomorph.com"
 fi
 
-#### 6. Start the docker services using following command (The HTTP_PORT and HTTPS_PORT have been calculated in step 3):
+#### 6. Start the docker services using following command:
 
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
-
-
-#### 7. Verify the docker service is up and running using the following command (The HTTP_PORT and HTTPS_PORT have been calculated in step 3):
-
-curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
 
 #### 7. Configure Firewall (UFW has to be available). Use the following commands to allow incoming socket flow for the service:
 
@@ -80,9 +75,8 @@ if command -v ufw &> /dev/null; then
     sudo ufw --force enable
 fi
 
-**After completion, verify:**
-- All containers are running (check with docker-compose ps)
-- Services are accessible on calculated HTTP_PORT and HTTPS_PORT
-- Report the final status including ports and any errors encountered
+#### 8. Verify the docker service is up and running using the following command:
 
-IMPORTANT: You must complete ALL steps above. Do not stop early. Execute every command and report the final status of the deployment.
+curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
+
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.swautomorph.com:$HTTPS_PORT

@@ -16,7 +16,7 @@ export HTTPS_PORT=$((HTTP_PORT+1))
 export HTTP_PORT2=$(($HTTPS_PORT+1))
 export HTTPS_PORT2=$(($HTTP_PORT2+1))
 
-#### 2. Check the Status of the application using docker-compose command. Use the following commands to get the status of the application:
+#### 2. Check the Status of the application using docker-compose command. If the containers is not started, do not ask to start or do something else. Use the following commands to get the status of the application:
 
 export docker_status="IS_NOT_RUNNING"
 export docker_ports="[]"
@@ -29,12 +29,11 @@ if docker container ls --filter "status=running" --format "{{.Names}}" | grep "^
     fi
 fi
 
-
 #### 3. Get Git Remote  for the application. Use the following commands to list the git remote reporsitories: 
 
 export git_remotes=$(git remote -v 2>/dev/null | awk '{print $2}' | sort -u | jq -R . | jq -s . 2>/dev/null || echo '[]')
 
-#### 4. Output result as a JSON format. Once all informations are gathered using previous step, then display the results using the following command:
+#### 4. Output the results as a JSON format. Once all informations are gathered using previous steps 2 and 3, then display the results using the following command:
 
 jq -n --arg user_id "$USER_ID" \
       --arg user_name "$USER_NAME" \
@@ -57,7 +56,9 @@ jq -n --arg user_id "$USER_ID" \
         "git_remote": $git_remotes
       }'
 
-**Summary:** return the JSON output with all service information. The Expected JSON Output Format:
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.swautomorph.com:$HTTPS_PORT
+
+As an example, this is and example of the expected JSON Output Format:
 {
   "environment_vars": {
     "USER_ID": "...",
