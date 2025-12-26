@@ -66,10 +66,6 @@ HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$
 #### 7. Configure Firewall (UFW has to be available). Use the following commands to allow incoming socket flow for the service:
 
 if command -v ufw &> /dev/null; then
-    sudo ufw --force reset
-    sudo ufw default deny incoming
-    sudo ufw default allow outgoing
-    sudo ufw allow ssh
     sudo ufw allow $HTTP_PORT/tcp
     sudo ufw allow $HTTPS_PORT/tcp
     sudo ufw --force enable
