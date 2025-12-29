@@ -41,29 +41,12 @@ export HTTPS_PORT2=$(($HTTP_PORT2+1))
 
 sed "s/\$\U\S\E\R\_\I\D/{$USER_ID}/g" conf/nginx.conf.template > conf/nginx.conf
 
-#### 5. Setup SSL Certificates. If exist, copy www_swautomorph_com.crt and privateKey_automorph_simple.key. You can use the following commands:
-mkdir -p ssl
-if [[ -f ~/.ssh/www_swautomorph_com.crt && -f ~/.ssh/privateKey_automorph_simple.key ]]; then
-    cp ~/.ssh/www_swautomorph_com.crt ssl/fullchain.pem
-    cp ~/.ssh/privateKey_automorph_simple.key ssl/privkey.pem
-elif command -v certbot &> /dev/null; then
-    sudo systemctl stop nginx 2>/dev/null || true
-    sudo certbot certonly --standalone -d www.swautomorph.com --email admin@swautomorph.com --agree-tos --non-interactive --quiet
-    sudo cp /etc/letsencrypt/live/www.swautomorph.com/fullchain.pem ssl/
-    sudo cp /etc/letsencrypt/live/www.swautomorph.com/privkey.pem ssl/
-    sudo chown -R $USER:$USER ssl/
-else
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout ssl/privkey.pem \
-        -out ssl/fullchain.pem \
-        -subj "/C=US/ST=State/L=City/O=Organization/CN=www.swautomorph.com"
-fi
 
-#### 6. Start the docker services using following command:
+#### 5. Start the docker services using following command:
 
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
 
-#### 7. Configure Firewall (UFW has to be available). Use the following commands to allow incoming socket flow for the service:
+#### 6. Configure Firewall (UFW has to be available). Use the following commands to allow incoming socket flow for the service:
 
 if command -v ufw &> /dev/null; then
     sudo ufw allow $HTTP_PORT/tcp
@@ -71,7 +54,7 @@ if command -v ufw &> /dev/null; then
     sudo ufw --force enable
 fi
 
-#### 8. Verify the docker service is up and running using the following command:
+#### 7. Verify the docker service is up and running using the following command:
 
 curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
 
