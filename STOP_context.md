@@ -18,7 +18,16 @@ export HTTPS_PORT2=$(($HTTP_PORT2+1))
 
 #### 2. Stop the running application. Use the following commands to stop the application, based on the ports calculated during step 1:
 
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2  USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml down
+log_info "Stopping ${NAME_OF_APPLICATION} services..."
+# Stop containers by name pattern
+containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
+if [[ -n "$containers" ]]; then
+    docker stop $containers
+    docker rm $containers
+    log_info "Services stopped successfully ✅"
+else
+    log_warn "No running containers found for USER_ID: $USER_ID"
+fi
 
 
 **After completion, verify:**
