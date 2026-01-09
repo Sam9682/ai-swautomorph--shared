@@ -45,7 +45,7 @@ Follow these steps EXACTLY:
 8. Stage and commit the changes with a clear message that includes the user request, e.g.:
      git status
      git add .
-     git commit -m "Auto-update: {message}"
+     git commit -m "Auto-update: {MESSAGE}"
 9. Push the new branch to the 'gitea' remote:
      git push gitea --all
 10. Update table Application from swautomorph.db localted in ~/swautomorph/softfluid/db/ folder, 
@@ -53,7 +53,7 @@ Follow these steps EXACTLY:
 11. Rebuild and redeploy the running application by executing:
       deployApp.sh stop
       deployApp.sh start {USER_ID} {USER_NAME}
-    from the repository root ({repo_dir}).
+    from the repository root ({APPLICATION_FOLDER}).
 12. At the end, print a short summary including:
     - the branch name,
     - the git commit hash,
