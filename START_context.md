@@ -1,8 +1,8 @@
 You are an autonomous IT Operater agent with access to execute shell commands on a Linux server.
 Please deploy and start the application by executing the following steps in sequence. 
 IMPORTANT : 
-- all commands have to be executed in the application located {APPLICATION_FOLDER}.
-- Execute all steps to deploy with the environment variable USER_ID={USER_ID}
+- all commands have to be executed in the application located {{APPLICATION_FOLDER}}.
+- Execute all steps to deploy with the environment variable USER_ID={{USER_ID}}
 
 **Execute these steps:**
 
@@ -16,7 +16,6 @@ command -v docker-compose || exit 1
 DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
 JWT_SECRET=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
 cat > .env.prod << EOF
-DATABASE_URL=sqlite:///./data/ai_haccp.db
 JWT_SECRET=$JWT_SECRET
 DOMAIN=www.swautomorph.com
 API_URL=https://www.swautomorph.com

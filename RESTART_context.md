@@ -1,7 +1,7 @@
 Please restart all running Docker containers for the specified user instance without rebuilding images.
 IMPORTANT : 
-- all commands have to be executed in the application located {APPLICATION_FOLDER}.
-- Execute all steps to deploy with the environment variable USER_ID={USER_ID}
+- all commands have to be executed in the application located {{APPLICATION_FOLDER}}.
+- Execute all steps to deploy with the environment variable USER_ID={{USER_ID}}
 
 #### 1. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
 
@@ -19,9 +19,11 @@ export HTTPS_PORT2=$(($HTTP_PORT2+1))
 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml restart
 
 
-**After completion, verify:**
-- Services are running with existing configuration
-- No images were rebuilt
-- Report the final status
+#### 3. Verify the docker service is up and running using the following command:
+
+curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
+
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.swautomorph.com:$HTTPS_PORT
+
 
 **Summary:** confirm all services are running again.

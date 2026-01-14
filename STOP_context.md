@@ -1,7 +1,7 @@
 Please stop all running Docker containers for the specified user instance by executing the following steps.
 IMPORTANT : 
-- all commands have to be executed in the application located {APPLICATION_FOLDER}.
-- Execute all steps to deploy with the environment variable USER_ID={USER_ID}
+- all commands have to be executed in the application located {{APPLICATION_FOLDER}}.
+- Execute all steps to deploy with the environment variable USER_ID={{USER_ID}}
 
 #### 1. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
 
@@ -18,7 +18,7 @@ export HTTPS_PORT2=$(($HTTP_PORT2+1))
 
 #### 2. Stop the running application. Use the following commands to stop the application, based on the ports calculated during step 1:
 
-log_info "Stopping ${NAME_OF_APPLICATION} services..."
+log_info "Stopping {{APPLICATION_NAME}} services..."
 # Stop containers by name pattern
 containers=$(docker ps -q --filter "name=${NAME_OF_APPLICATION}-.*-${USER_ID}-.*")
 if [[ -n "$containers" ]]; then
