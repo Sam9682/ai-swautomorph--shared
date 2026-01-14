@@ -48,11 +48,11 @@ Follow these steps EXACTLY:
      git commit -m "Auto-update: {{MESSAGE}}"
 9. Push the new branch to the 'gitea' remote:
      git push gitea --all
-10. Update table Application from swautomorph.db localted in ~/swautomorph/softfluid/db/ folder, 
-    set the field 'gitea_url' of Deployments table to the value '{{REPO_GITEA_URL}}' where application_name = '{{APPLICATION_NAME}}'
-11. Rebuild and redeploy the running application by executing:
-      deployApp.sh stop
-      deployApp.sh start {{USER_ID}} {{USER_NAME}}
+10. Update table Application from swautomorph postgresql database, 
+    set the field 'gitea_url' of 'deployments' table to the value '{{REPO_GITEA_URL}}' where application_name = '{{APPLICATION_NAME}}'
+11. Rebuild and redeploy the running application by executing the following 2 commands:
+      - deployApp.sh stop
+      - deployApp.sh start {{USER_ID}} {{USER_NAME}}
     from the repository root ({{APPLICATION_FOLDER}}).
 12. At the end, print a short summary including:
     - the branch name,
