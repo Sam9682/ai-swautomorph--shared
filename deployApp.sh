@@ -3,14 +3,37 @@
 
 set -e
 
-# Load configuration
-source ./conf/deploy.ini
+# Load configuration from deploy.ini
+load_config() {
+    local config_file="./conf/deploy.ini"
+    if [ -f "$config_file" ]; then
+        echo "📋 Loading configuration from $config_file"
+        # Source the config file, ignoring comments and empty lines
+        while IFS='=' read -r key value; do
+            # Skip comments and empty lines
+            [[ $key =~ ^[[:space:]]*# ]] && continue
+            [[ -z $key ]] && continue
+            # Remove leading/trailing whitespace and export
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            if [[ -n $key && -n $value ]]; then
+                export "$key"="$value"
+            fi
+        done < "$config_file"
+        echo "  ✅ Configuration loaded successfully"
+    else
+        echo "  ⚠️ Configuration file $config_file not found, using defaults"
+    fi
+}
+
+# Load configuration first
+load_config
 
 # Global Parameters
 COMMAND=${1:-help}
 USER_ID=${2:-0}
 USER_NAME=${3:-"admin"}
-USER_EMAIL=${4:-"admin@swautomorph.com"}
+USER_EMAIL=${4:-"admin@softfluid.fr"}
 DESCRIPTION=${5:-"Basic Admin User"}
 
 RANGE_START=6000
@@ -18,8 +41,8 @@ RANGE_RESERVED=100
 RANGE_PORTS_PER_APPLICATION=4
 
 # Configuration
-DOMAIN=${DOMAIN:-"www.swautomorph.com"}
-EMAIL=${EMAIL:-"admin@swautomorph.com"}
+DOMAIN=${DOMAIN:-"www.softfluid.fr"}
+EMAIL=${EMAIL:-"admin@softfluid.fr"}
 ENV_FILE=".env.prod"
 
 # Calculate ports (convert alphanumeric USER_ID to numeric for port calculation)
@@ -159,15 +182,15 @@ setup_ssl() {
     fi
     
     # Check for existing certificates in ~/.ssh/ or current ssl/ directory
-    if [[ -f "$HOME/.ssh/STAR_swautomorph_com.crt" && -f "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ]]; then
+    if [[ -f "$HOME/.ssh/certificate_domain.crt" && -f "$HOME/.ssh/privateKey_domain.key" ]]; then
             log_info "Using existing certificates from ~/.ssh/..."
             
             # Remove any existing directories with same names
             rm -rf ssl/fullchain.pem ssl/privkey.pem
             
             # Copy existing certificates
-            cp "$HOME/.ssh/STAR_swautomorph_com.crt" ssl/fullchain.pem
-            cp "$HOME/.ssh/privateKey_STAR_swautomorph_com.key" ssl/privkey.pem
+            cp "$HOME/.ssh/certificate_domain.crt" ssl/fullchain.pem
+            cp "$HOME/.ssh/privateKey_domain.key" ssl/privkey.pem
             
             # Set proper permissions
             chmod 644 ssl/fullchain.pem
@@ -175,15 +198,15 @@ setup_ssl() {
             
             log_info "Existing certificates copied ✅"
         # Check for certificates in current ssl directory
-        elif [[ -f "ssl/STAR_swautomorph_com.crt" && -f "ssl/privateKey_STAR_swautomorph_com.key" ]]; then
+        elif [[ -f "ssl/certificate_domain.crt" && -f "ssl/privateKey_domain.key" ]]; then
             log_info "Using existing certificates from ssl/ directory..."
             
             # Remove any existing directories with same names
             rm -rf ssl/fullchain.pem ssl/privkey.pem
             
             # Copy existing certificates
-            cp ssl/STAR_swautomorph_com.crt ssl/fullchain.pem
-            cp ssl/privateKey_STAR_swautomorph_com.key ssl/privkey.pem
+            cp ssl/certificate_domain.crt ssl/fullchain.pem
+            cp ssl/privateKey_domain.key ssl/privkey.pem
             
             # Set proper permissions
             chmod 644 ssl/fullchain.pem
@@ -281,7 +304,7 @@ verify_deployment() {
     
     # Test API health endpoint
     sleep 10
-    if curl -f -s "https://www.swautomorph.com:${HTTPS_PORT}/" > /dev/null; then
+    if curl -f -s "https://${DOMAIN}:${HTTPS_PORT}/" > /dev/null; then
         log_info "API health check passed ✅"
     else
         log_warn "API health check failed, but services are running"

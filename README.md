@@ -69,9 +69,9 @@ HTTPS_PORT2 = HTTP_PORT2 + 1
 1. Create `ssl/` directory if it doesn't exist
 2. Remove any existing directories that should be files (ssl/fullchain.pem, ssl/privkey.pem)
 3. Check for existing certificates in multiple locations:
-   - If `~/.ssh/STAR_swautomorph_com.crt` AND `~/.ssh/privateKey_STAR_swautomorph_com.key` exist:
+   - If `~/.ssh/certificate_domain.crt` AND `~/.ssh/privateKey_domain.key` exist:
      - Copy to `ssl/fullchain.pem` and `ssl/privkey.pem`
-   - Else if `ssl/STAR_swautomorph_com.crt` AND `ssl/privateKey_STAR_swautomorph_com.key` exist:
+   - Else if `ssl/certificate_domain.crt` AND `ssl/privateKey_domain.key` exist:
      - Copy to `ssl/fullchain.pem` and `ssl/privkey.pem`
 4. Else if certbot is installed:
    - Stop nginx if running: `sudo systemctl stop nginx`
