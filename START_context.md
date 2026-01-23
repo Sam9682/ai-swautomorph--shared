@@ -11,20 +11,7 @@ IMPORTANT :
 command -v docker || exit 1
 command -v docker-compose || exit 1
 
-#### 2. Generate Secrets (only if .env.prod doesn't exist)
-
-DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-JWT_SECRET=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
-cat > .env.prod << EOF
-JWT_SECRET=$JWT_SECRET
-DOMAIN=www.swautomorph.com
-API_URL=https://www.swautomorph.com
-SSL_EMAIL=admin@swautomorph.com
-REACT_APP_API_URL=https://www.swautomorph.com
-EOF
-chmod 600 .env.prod
-
-#### 3. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
+#### 2. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
 
 source ./conf/deploy.ini
 if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
@@ -35,6 +22,22 @@ export HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER
 export HTTPS_PORT=$((HTTP_PORT+1))
 export HTTP_PORT2=$(($HTTPS_PORT+1))
 export HTTPS_PORT2=$(($HTTP_PORT2+1))
+export DOMAIN=$(($DOMAIN))
+
+#### 3. Generate Secrets (only if .env.prod doesn't exist)
+
+DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+JWT_SECRET=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
+cat > .env.prod << EOF
+JWT_SECRET=$JWT_SECRET
+DOMAIN=www.${DOMAIN}
+API_URL=https://www.${DOMAIN}
+SSL_EMAIL=admin@${DOMAIN}
+REACT_APP_API_URL=https://www.${DOMAIN}
+EOF
+chmod 600 .env.prod
+
+
 
 #### 4. Generate Nginx Configuration. If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step. You can use the following command:
 
@@ -55,6 +58,6 @@ fi
 
 #### 7. Verify the docker service is up and running using the following command:
 
-curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
+curl -f -s "http://www.${DOMAIN}:${HTTP_PORT}" || true
 
-Finaly, display the link to the web site so the user can click on it to open the application: https://www.swautomorph.com:$HTTPS_PORT
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.${DOMAIN}:${HTTPS_PORT}

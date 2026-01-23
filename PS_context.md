@@ -15,6 +15,7 @@ export HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER
 export HTTPS_PORT=$((HTTP_PORT+1))
 export HTTP_PORT2=$(($HTTPS_PORT+1))
 export HTTPS_PORT2=$(($HTTP_PORT2+1))
+export DOMAIN=$(($DOMAIN))
 
 #### 2. Check the Status of the application using docker-compose command. If the containers is not started, do not ask to start or do something else. Use the following commands to get the status of the application:
 
@@ -56,7 +57,7 @@ jq -n --arg user_id "$USER_ID" \
         "git_remote": $git_remotes
       }'
 
-Finaly, display the link to the web site so the user can click on it to open the application: https://www.swautomorph.com:$HTTPS_PORT
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.${DOMAIN}:$HTTPS_PORT
 
 As an example, this is and example of the expected JSON Output Format:
 {

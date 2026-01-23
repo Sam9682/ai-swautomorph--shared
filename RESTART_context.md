@@ -21,9 +21,9 @@ HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$
 
 #### 3. Verify the docker service is up and running using the following command:
 
-curl -f -s "http://www.swautomorph.com:$HTTP_PORT" || true
+curl -f -s "http://www.${DOMAIN}:${HTTP_PORT}" || true
 
-Finaly, display the link to the web site so the user can click on it to open the application: https://www.swautomorph.com:$HTTPS_PORT
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.${DOMAIN}:${HTTPS_PORT}
 
 
 **Summary:** confirm all services are running again.
