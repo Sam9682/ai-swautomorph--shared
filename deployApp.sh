@@ -41,7 +41,7 @@ RANGE_RESERVED=100
 RANGE_PORTS_PER_APPLICATION=4
 
 # Configuration
-DOMAIN=${DOMAIN:-"www.softfluid.fr"}
+DOMAIN=${DOMAIN:-"softfluid.fr"}
 EMAIL=${EMAIL:-"admin@softfluid.fr"}
 ENV_FILE=".env.prod"
 
