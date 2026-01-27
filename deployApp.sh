@@ -183,68 +183,68 @@ setup_ssl() {
     
     # Check for existing certificates in ~/.ssh/ or current ssl/ directory
     if [[ -f "$HOME/.ssh/certificate_domain.crt" && -f "$HOME/.ssh/privateKey_domain.key" ]]; then
-            log_info "Using existing certificates from ~/.ssh/..."
-            
-            # Remove any existing directories with same names
-            rm -rf ssl/fullchain.pem ssl/privkey.pem
-            
-            # Copy existing certificates
-            cp "$HOME/.ssh/certificate_domain.crt" ssl/fullchain.pem
-            cp "$HOME/.ssh/privateKey_domain.key" ssl/privkey.pem
-            
-            # Set proper permissions
-            chmod 644 ssl/fullchain.pem
-            chmod 600 ssl/privkey.pem
-            
-            log_info "Existing certificates copied ✅"
-        # Check for certificates in current ssl directory
-        elif [[ -f "ssl/certificate_domain.crt" && -f "ssl/privateKey_domain.key" ]]; then
-            log_info "Using existing certificates from ssl/ directory..."
-            
-            # Remove any existing directories with same names
-            rm -rf ssl/fullchain.pem ssl/privkey.pem
-            
-            # Copy existing certificates
-            cp ssl/certificate_domain.crt ssl/fullchain.pem
-            cp ssl/privateKey_domain.key ssl/privkey.pem
-            
-            # Set proper permissions
-            chmod 644 ssl/fullchain.pem
-            chmod 600 ssl/privkey.pem
-            
-            log_info "Local certificates copied ✅"
-        # Check if certbot is installed
-        elif command -v certbot &> /dev/null; then
-            log_info "Obtaining SSL certificate for $DOMAIN..."
-            
-            # Stop nginx if running
-            sudo systemctl stop nginx 2>/dev/null || true
-            
-            # Get certificate
-            sudo certbot certonly --standalone \
-                -d "$DOMAIN" \
-                --email "$EMAIL" \
-                --agree-tos \
-                --non-interactive \
-                --quiet
-            
-            # Copy certificates from letsencrypt
-            sudo cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ssl/
-            sudo cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ssl/
-            sudo chown -R $USER:$USER ssl/
-            
-            log_info "SSL certificates obtained ✅"
-        else
-            log_warn "Certbot not found. Creating self-signed certificates for testing..."
-            
-            # Create self-signed certificate for testing
-            openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-                -keyout ssl/privkey.pem \
-                -out ssl/fullchain.pem \
-                -subj "/C=US/ST=State/L=City/O=Organization/CN=$DOMAIN"
-            
-            log_warn "Self-signed certificate created. Replace with real certificate for production!"
-        fi
+        log_info "Using existing certificates from ~/.ssh/..."
+        
+        # Remove any existing directories with same names
+        rm -rf ssl/fullchain.pem ssl/privkey.pem
+        
+        # Copy existing certificates
+        cp "$HOME/.ssh/certificate_domain.crt" ssl/fullchain.pem
+        cp "$HOME/.ssh/privateKey_domain.key" ssl/privkey.pem
+        
+        # Set proper permissions
+        chmod 644 ssl/fullchain.pem
+        chmod 600 ssl/privkey.pem
+        
+        log_info "Existing certificates copied ✅"
+    # Check for certificates in current ssl directory
+    elif [[ -f "ssl/certificate_domain.crt" && -f "ssl/privateKey_domain.key" ]]; then
+        log_info "Using existing certificates from ssl/ directory..."
+        
+        # Remove any existing directories with same names
+        rm -rf ssl/fullchain.pem ssl/privkey.pem
+        
+        # Copy existing certificates
+        cp ssl/certificate_domain.crt ssl/fullchain.pem
+        cp ssl/privateKey_domain.key ssl/privkey.pem
+        
+        # Set proper permissions
+        chmod 644 ssl/fullchain.pem
+        chmod 600 ssl/privkey.pem
+        
+        log_info "Local certificates copied ✅"
+    # Check if certbot is installed
+    elif command -v certbot &> /dev/null; then
+        log_info "Obtaining SSL certificate for $DOMAIN..."
+        
+        # Stop nginx if running
+        sudo systemctl stop nginx 2>/dev/null || true
+        
+        # Get certificate
+        sudo certbot certonly --standalone \
+            -d "$DOMAIN" \
+            --email "$EMAIL" \
+            --agree-tos \
+            --non-interactive \
+            --quiet
+        
+        # Copy certificates from letsencrypt
+        sudo cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ssl/
+        sudo cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ssl/
+        sudo chown -R $USER:$USER ssl/
+        
+        log_info "SSL certificates obtained ✅"
+    else
+        log_warn "Certbot not found. Creating self-signed certificates for testing..."
+        
+        # Create self-signed certificate for testing
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout ssl/privkey.pem \
+            -out ssl/fullchain.pem \
+            -subj "/C=US/ST=State/L=City/O=Organization/CN=$DOMAIN"
+        
+        log_warn "Self-signed certificate created. Replace with real certificate for production!"
+    fi
     
     # Final verification that certificates are files
     if [[ -f "ssl/fullchain.pem" && -f "ssl/privkey.pem" ]]; then
