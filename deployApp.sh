@@ -182,14 +182,14 @@ setup_ssl() {
     fi
     
     # Check for existing certificates in ~/.ssh/ or current ssl/ directory
-    if [[ -f "$HOME/.ssh/certificate_domain.crt" && -f "$HOME/.ssh/privateKey_domain.key" ]]; then
+    if [[ -f "$HOME/.ssh/fullchain_domain.crt" && -f "$HOME/.ssh/privateKey_domain.key" ]]; then
         log_info "Using existing certificates from ~/.ssh/..."
         
         # Remove any existing directories with same names
         rm -rf ssl/fullchain.pem ssl/privkey.pem
         
         # Copy existing certificates
-        cp "$HOME/.ssh/certificate_domain.crt" ssl/fullchain.pem
+        cp "$HOME/.ssh/fullchain_domain.crt" ssl/fullchain.pem
         cp "$HOME/.ssh/privateKey_domain.key" ssl/privkey.pem
         
         # Set proper permissions
@@ -198,14 +198,14 @@ setup_ssl() {
         
         log_info "Existing certificates copied ✅"
     # Check for certificates in current ssl directory
-    elif [[ -f "ssl/certificate_domain.crt" && -f "ssl/privateKey_domain.key" ]]; then
+    elif [[ -f "ssl/fullchain_domain.crt" && -f "ssl/privateKey_domain.key" ]]; then
         log_info "Using existing certificates from ssl/ directory..."
         
         # Remove any existing directories with same names
         rm -rf ssl/fullchain.pem ssl/privkey.pem
         
         # Copy existing certificates
-        cp ssl/certificate_domain.crt ssl/fullchain.pem
+        cp ssl/fullchain_domain.crt ssl/fullchain.pem
         cp ssl/privateKey_domain.key ssl/privkey.pem
         
         # Set proper permissions
