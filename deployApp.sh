@@ -169,20 +169,12 @@ setup_ssl() {
     if [[ ! -d "ssl" ]]; then
         mkdir -p ssl
     fi
-    
-    # Remove any existing directories that should be files
-    if [[ -d "ssl/fullchain.pem" ]]; then
-        log_warn "Removing directory ssl/fullchain.pem (should be a file)..."
-        rm -rf ssl/fullchain.pem
-    fi
-    
-    if [[ -d "ssl/privkey.pem" ]]; then
-        log_warn "Removing directory ssl/privkey.pem (should be a file)..."
-        rm -rf ssl/privkey.pem
-    fi
-    
+
+    if [[ -f "ssl/fullchain.pem" && -f "ssl/privkey.pem" ]]; then
+        log_info "SSL certificates already exist in ./ssl fodler ✅"
+
     # Check for existing certificates in ~/.ssh/ or current ssl/ directory
-    if [[ -f "$HOME/.ssh/fullchain_domain.crt" && -f "$HOME/.ssh/privateKey_domain.key" ]]; then
+    elif [[ -f "$HOME/.ssh/fullchain_domain.crt" && -f "$HOME/.ssh/privateKey_domain.key" ]]; then
         log_info "Using existing certificates from ~/.ssh/..."
         
         # Remove any existing directories with same names
