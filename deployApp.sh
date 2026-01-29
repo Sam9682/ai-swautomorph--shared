@@ -335,6 +335,8 @@ setup_firewall() {
 create_backup_script() {
     log_info "Creating backup script..."
     
+    mkdir -p ./scripts
+    
     cat > ./scripts/backup.sh << 'EOF'
 #!/bin/bash
 # ${NAME_OF_APPLICATION} Backup Script
