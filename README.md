@@ -136,6 +136,46 @@ HTTPS_PORT2 = HTTP_PORT2 + 1
 
 **Command**: This is part of the `start` operation, or check status with `./deployApp.sh ps [USER_ID]`
 
+## Operation 6: Specify AI Context for Modifications
+
+**Purpose**: Transform brief user requests into detailed, actionable specifications for application modifications.
+
+**Overview**: The SPECIFY feature acts as an AI assistant that helps users who want to modify an application but aren't sure how to write comprehensive specifications. It analyzes brief descriptions and generates detailed technical specifications that can be used with the MODIFY action.
+
+**How It Works**:
+1. User provides a brief description (1-2 sentences) of desired changes
+2. AI analyzes the request using the `SPECIFY_context.md` template
+3. AI generates a comprehensive specification including:
+   - Clear objectives and scope
+   - Technical requirements and implementation details
+   - Acceptance criteria
+   - Constraints and considerations
+   - Code examples when helpful
+4. User copies the generated specification and uses it with the MODIFY action
+
+**Context Template**: The feature uses `SPECIFY_context.md` which contains:
+- Instructions for analyzing user requests
+- Guidelines for generating detailed specifications
+- Output format requirements
+- Application context variables (APPLICATION_NAME, APPLICATION_FOLDER, REPO_GITHUB_URL)
+
+**Benefits**:
+- Saves time by eliminating manual specification writing
+- Reduces errors by ensuring all important aspects are covered
+- Produces better results through detailed, structured requirements
+- Serves as a learning tool for understanding technical specifications
+
+**Example Use Cases**:
+- "Add a contact form to the homepage"
+- "Change the login button color to blue"
+- "Fix the bug where users can't upload images"
+
+**Output Format**: Specifications include a summary box with:
+- Type (Feature/Bug Fix/Enhancement/Refactoring)
+- Complexity level (Low/Medium/High)
+- Estimated impact (files and components affected)
+- Risk level (Low/Medium/High)
+
 ## Additional Operations
 
 ### Check Status
