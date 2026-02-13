@@ -62,15 +62,38 @@ Follow these steps EXACTLY:
    - Update service names to match application
    - Configure volumes, networks, and environment variables
 
-#### 7. Copy or create deployApp.sh
-   If deployApp.sh is missing or non-compliant:
-   - Use ~/ai-swautomorph/deployApp.sh as reference
-   - Adapt it for {{APPLICATION_NAME}}
-   - Ensure all operations are present: start, stop, restart, ps, logs
-   - Ensure proper port calculation logic
-   - Ensure proper SSL certificate handling
-   - Ensure proper configuration file generation
-   - Make the script executable: chmod +x deployApp.sh
+#### 7. Add ai-swautomorph-shared as git submodule
+   Clone the shared repository as a git submodule and create a symbolic link to deployApp.sh:
+   
+   ```bash
+   # Add the submodule if it doesn't exist
+   if [ ! -d "shared" ]; then
+       git submodule add https://github.com/Sam9682/ai-swautomorph-shared.git shared
+       git submodule update --init --recursive
+   else
+       echo "Submodule 'shared' already exists"
+       # Update existing submodule
+       git submodule update --remote shared
+   fi
+   
+   # Create symbolic link to deployApp.sh
+   if [ -L "deployApp.sh" ] || [ -f "deployApp.sh" ]; then
+       rm -f deployApp.sh
+   fi
+   ln -s ./shared/deployApp.sh deployApp.sh
+   
+   # Verify the link was created
+   ls -la deployApp.sh
+   ```
+   
+   This ensures:
+   - The shared deployment scripts are version-controlled via submodule
+   - Updates to shared scripts can be pulled easily
+   - The application uses the standard swautomorph deployApp.sh
+   - All operations are present: start, stop, restart, ps, logs
+   - Proper port calculation logic is maintained
+   - SSL certificate handling is standardized
+   - Configuration file generation follows platform standards
 
 #### 8. Create or update conf/deploy.ini
    Ensure conf/deploy.ini exists with required variables:
@@ -134,11 +157,13 @@ Follow these steps EXACTLY:
    ```
 
 #### 15. Verify file permissions
-   Ensure scripts are executable:
+   Ensure scripts in the shared submodule and other scripts are executable:
    ```bash
-   chmod +x deployApp.sh
+   chmod +x shared/deployApp.sh 2>/dev/null || true
    chmod +x scripts/*.sh 2>/dev/null || true
    ```
+   
+   Note: The deployApp.sh symbolic link will inherit permissions from the target file.
 
 #### 16. Test configuration loading
    Verify that conf/deploy.ini can be sourced and variables are set:
@@ -158,10 +183,12 @@ Follow these steps EXACTLY:
    ```bash
    git status
    git add .
+   git add .gitmodules
    git commit -m "Make application compliant with ai-swautomorph platform
 
+   - Added ai-swautomorph-shared submodule for deployment scripts
+   - Created symbolic link deployApp.sh -> ./shared/deployApp.sh
    - Added/updated docker-compose.yml with proper port and USER_ID handling
-   - Added/updated deployApp.sh with all required operations
    - Added/updated configuration files (deploy.ini, nginx.conf.template)
    - Created required directory structure (ssl/, conf/, scripts/)
    - Updated environment configuration
@@ -193,8 +220,9 @@ Follow these steps EXACTLY:
    
    COMPLIANCE STATUS:
    ─────────────────────────────────────────────────────────────────────────────
+   ✅ shared/ submodule - Added (ai-swautomorph-shared)
+   ✅ deployApp.sh - Created as symbolic link to ./shared/deployApp.sh
    ✅ docker-compose.yml - Created/Updated
-   ✅ deployApp.sh - Created/Updated
    ✅ conf/deploy.ini - Created/Updated
    ✅ conf/nginx.conf.template - Created/Updated
    ✅ ssl/ directory - Created
@@ -207,6 +235,7 @@ Follow these steps EXACTLY:
    2. Test deployment using: ./deployApp.sh start [USER_ID] [USER_NAME] [USER_EMAIL]
    3. Verify all services start correctly
    4. Merge the compliance branch if everything works
+   5. To update shared scripts in future: git submodule update --remote shared
    
    ═══════════════════════════════════════════════════════════════════════════════
    ```
