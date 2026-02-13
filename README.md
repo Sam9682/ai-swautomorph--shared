@@ -136,7 +136,103 @@ HTTPS_PORT2 = HTTP_PORT2 + 1
 
 **Command**: This is part of the `start` operation, or check status with `./deployApp.sh ps [USER_ID]`
 
-## Operation 6: Specify AI Context for Modifications
+## Operation 6: Verify Application Compliance
+
+**Purpose**: Verify if an application is compliant with the ai-swautomorph platform architecture requirements.
+
+**Overview**: The VERIFY_APP_COMPLIANCE feature analyzes an application's structure and configuration against the ai-swautomorph platform reference architecture located at `~/ai-swautomorph`. It generates a detailed compliance report identifying what components are missing, non-compliant, or correctly configured.
+
+**How It Works**:
+1. Analyzes the ai-swautomorph platform requirements (docker-compose.yml, deployApp.sh, configurations)
+2. Inspects the target application structure at APPLICATION_FOLDER
+3. Compares each component against platform requirements
+4. Generates a comprehensive compliance report with:
+   - Compliant components ✅
+   - Missing components ❌
+   - Non-compliant components ⚠️
+   - Configuration issues 🔧
+   - Deployment script compliance 📜
+5. Calculates an overall compliance score
+6. Provides actionable recommendations with priority levels
+
+**Context Template**: Uses `VERIFY_APP_COMPLIANCE_context.md` which verifies:
+- docker-compose.yml structure (ports, volumes, networks, naming)
+- deployApp.sh operations (start, stop, restart, ps, logs)
+- Configuration files (conf/deploy.ini, nginx.conf.template)
+- Environment variable handling
+- SSL certificate management
+- Port calculation formulas
+- Container and project naming patterns
+- Directory structure (ssl/, conf/, scripts/)
+
+**Output**: Detailed compliance report including:
+- Overall compliance score (percentage)
+- Status (COMPLIANT/PARTIALLY COMPLIANT/NON-COMPLIANT)
+- Count of critical, high, medium, and low priority issues
+- Specific recommendations for each issue
+- References to swautomorph examples
+
+**Use Case**: Run before attempting to deploy an application through the swautomorph platform to identify what needs to be fixed.
+
+## Operation 7: Make Application Compliant
+
+**Purpose**: Automatically modify an application to make it fully compliant with the ai-swautomorph platform architecture.
+
+**Overview**: The MAKE_APP_COMPLIANT feature performs automated remediation to bring an application into compliance with swautomorph requirements. It uses the reference architecture at `~/ai-swautomorph` to create or update all necessary deployment infrastructure files.
+
+**How It Works**:
+1. Runs compliance verification to document current state
+2. Creates a git branch for compliance changes
+3. Copies or creates required files from swautomorph reference:
+   - docker-compose.yml with proper port and USER_ID handling
+   - deployApp.sh with all required operations
+   - conf/deploy.ini with application configuration
+   - conf/nginx.conf.template for reverse proxy
+   - SSL directory structure
+   - Environment configuration templates
+   - Backup scripts
+4. Adapts configurations for the specific application
+5. Sets proper file permissions
+6. Tests configuration loading
+7. Commits changes with detailed message
+8. Generates compliance report showing all changes
+
+**Context Template**: Uses `MAKE_APP_COMPLIANT_context.md` which:
+- Preserves application-specific code and business logic
+- Only modifies deployment infrastructure files
+- Follows swautomorph naming conventions exactly
+- Ensures proper port calculation: `PORT_RANGE_BEGIN = RANGE_START + USER_ID * RANGE_RESERVED`
+- Configures container naming: `${NAME_OF_APPLICATION}-.*-${USER_ID}-.*`
+- Sets up all required operations: start, stop, restart, ps, logs
+- Handles SSL certificates and nginx configuration
+- Creates backup functionality
+
+**Critical Requirements**:
+- Does NOT modify application business logic
+- Does NOT change database schemas or data
+- Does NOT alter application-specific environment variables
+- Does NOT remove existing functionality
+- ONLY adds or updates deployment infrastructure
+
+**Output**: Compliance remediation report including:
+- Branch name and commit hash
+- List of files created/modified
+- Compliance status for each component
+- Next steps for testing deployment
+- Specific deployment commands to verify
+
+**Deployment Test Commands**:
+```bash
+cd APPLICATION_FOLDER
+./deployApp.sh start 0 testuser test@example.com "Test deployment"
+./deployApp.sh ps 0
+./deployApp.sh logs 0
+./deployApp.sh stop 0
+```
+
+**Use Case**: After running VERIFY_APP_COMPLIANCE and identifying issues, use this operation to automatically fix all compliance problems and prepare the application for swautomorph deployment.
+
+## Operation 8: Specify AI Context for Modifications
 
 **Purpose**: Transform brief user requests into detailed, actionable specifications for application modifications.
 
