@@ -61,6 +61,7 @@ Follow these steps EXACTLY:
    - Ensure proper project naming pattern
    - Update service names to match application
    - Configure volumes, networks, and environment variables
+   - verify that the names of the containers foolow the format: "{{APPLICATION_NAME}}-*-${USER_ID}-${HTTP_PORT}" for the internal application or "{{APPLICATION_NAME}}-*-${USER_ID}-${HTTPS_PORT}" for the main frontend application
 
 #### 7. Add ai-swautomorph-shared as git submodule
    Clone the shared repository as a git submodule and create a symbolic link to deployApp.sh:
@@ -105,6 +106,8 @@ Follow these steps EXACTLY:
    RANGE_PORTS_PER_APPLICATION=4
    ```
    
+   [appropriate number] is a unique number for each application. 
+
    Create conf/ directory if it doesn't exist:
    ```bash
    mkdir -p conf
