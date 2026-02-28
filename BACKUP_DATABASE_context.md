@@ -69,7 +69,32 @@ else
     exit 1
 fi
 
-#### 7. Clean up old local backups (keep last 7 days):
+#### 7. Record Backup in Deployment History:
+
+# Get deployment ID for this application
+DEPLOYMENT_ID=$(docker exec postgres psql -U $DB_USER -d ai_swautomorph -t -c \
+  "SELECT id FROM deployments WHERE user_id = $USER_ID AND application_name = '$NAME_OF_APPLICATION' ORDER BY updated_at DESC LIMIT 1" | xargs)
+
+# Add backup entry to deployment history
+if [ ! -z "$DEPLOYMENT_ID" ]; then
+    python3 /home/ubuntu/ai-swautomorph/scripts/add_backup_to_deployment.py \
+      --deployment-id $DEPLOYMENT_ID \
+      --backup-file "$(basename $BACKUP_FILE)" \
+      --s3-location "${S3_PATH}$(basename $BACKUP_FILE)" \
+      --backup-size "$(du -h $BACKUP_FILE | cut -f1)" \
+      --server-ip "$SERVER_IP" \
+      --user-id "$USER_ID"
+    
+    if [ $? -eq 0 ]; then
+        echo "✓ Backup recorded in deployment history"
+    else
+        echo "⚠ Warning: Failed to record backup in deployment history (backup still successful)"
+    fi
+else
+    echo "⚠ Warning: Deployment not found, backup not recorded in history (backup still successful)"
+fi
+
+#### 8. Clean up old local backups (keep last 7 days):
 
 find $BACKUP_DIR -name "*.sql.gz" -type f -mtime +7 -delete
 
@@ -77,3 +102,5 @@ Finally, display the backup information:
 - Backup file: $BACKUP_FILE
 - S3 location: ${S3_PATH}$(basename $BACKUP_FILE)
 - Backup size: $(du -h $BACKUP_FILE | cut -f1)
+- Deployment ID: $DEPLOYMENT_ID
+- Recorded in history: Yes (visible in Deployments Management dashboard)
