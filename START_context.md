@@ -13,7 +13,7 @@ command -v docker-compose || exit 1
 
 #### 2. Calculate HTTP Ports, which are the ports used by the docker containers of the application. Use the following command:
 
-source ./conf/deploy.ini
+source {{APPLICATION_FOLDER}}/conf/deploy.ini
 if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
@@ -39,9 +39,9 @@ chmod 600 .env.prod
 
 
 
-#### 4. Generate Nginx Configuration. If conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step. You can use the following command:
+#### 4. Generate Nginx Configuration. If {{APPLICATION_FOLDER}}/conf/nginx.conf.template file exists, then use nginx.conf.template to create nginx.conf. If the file does not exists, then go to next step. You can use the following command:
 
-sed "s/\$\U\S\E\R\_\I\D/{$USER_ID}/g" conf/nginx.conf.template > conf/nginx.conf
+sed "s/\$\U\S\E\R\_\I\D/{$USER_ID}/g" {{APPLICATION_FOLDER}}/conf/nginx.conf.template > {{APPLICATION_FOLDER}}/conf/nginx.conf
 
 
 #### 5. Start the docker services using following command:

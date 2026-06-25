@@ -96,7 +96,7 @@ Follow these steps EXACTLY:
    - SSL certificate handling is standardized
    - Configuration file generation follows platform standards
 
-#### 8. Create or update conf/deploy.ini
+#### 8. Create or update {{APPLICATION_FOLDER}}/conf/deploy.ini
    Ensure conf/deploy.ini exists with required variables:
    ```ini
    NAME_OF_APPLICATION={{APPLICATION_NAME}}
@@ -113,7 +113,7 @@ Follow these steps EXACTLY:
    mkdir -p conf
    ```
 
-#### 9. Create or update conf/nginx.conf.template
+#### 9. Create or update {{APPLICATION_FOLDER}}/conf/nginx.conf.template
    If nginx configuration is needed:
    - Use ~/ai-swautomorph/conf/nginx.conf.template as reference
    - Adapt for {{APPLICATION_NAME}}
@@ -171,7 +171,7 @@ Follow these steps EXACTLY:
 #### 16. Test configuration loading
    Verify that conf/deploy.ini can be sourced and variables are set:
    ```bash
-   source ./conf/deploy.ini
+   source {{APPLICATION_FOLDER}}/conf/deploy.ini
    echo "Application: $NAME_OF_APPLICATION"
    echo "Port range start: $RANGE_START"
    ```
