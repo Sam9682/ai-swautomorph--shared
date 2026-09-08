@@ -46,13 +46,16 @@ RANGE_PORTS_PER_APPLICATION=12
 # remove a port, edit ONLY this array and RANGE_PORTS_PER_APPLICATION; every
 # consumer (calculate_ports, show_environment, docker-compose env prefix,
 # setup_firewall, check_status) iterates this array.
+# By convention the FIRST entry (offset 0 = base) is HTTPS_PORT, the main web
+# interface of the application; the docker-compose project name and health
+# check are keyed on it.
 PORT_NAMES=(
-    HTTP_PORT1 HTTPS_PORT1
-    HTTP_PORT2 HTTPS_PORT2
-    HTTP_PORT3 HTTPS_PORT3
-    HTTP_PORT4 HTTPS_PORT4
-    HTTP_PORT5 HTTPS_PORT5
-    HTTP_PORT  HTTPS_PORT
+    HTTPS_PORT HTTP_PORT
+    HTTPS_PORT1 HTTP_PORT1
+    HTTPS_PORT2 HTTP_PORT2
+    HTTPS_PORT3 HTTP_PORT3
+    HTTPS_PORT4 HTTP_PORT4
+    HTTPS_PORT5 HTTP_PORT5
 )
 
 # Configuration
@@ -291,7 +294,7 @@ deploy_services() {
 
     local env_prefix
     env_prefix="$(port_env_prefix)"
-    local project="${NAME_OF_APPLICATION}-${USER_ID}-${HTTPS_PORT1}"
+    local project="${NAME_OF_APPLICATION}-${USER_ID}-${HTTPS_PORT}"
 
     # Stop existing services
     env $env_prefix docker-compose -p "$project" -f docker-compose.yml down 2>/dev/null || true
@@ -331,7 +334,7 @@ verify_deployment() {
     
     # Test API health endpoint
     sleep 10
-    if curl -f -s "https://${DOMAIN}:${HTTPS_PORT1}/" > /dev/null; then
+    if curl -f -s "https://${DOMAIN}:${HTTPS_PORT}/" > /dev/null; then
         log_info "API health check passed ✅"
     else
         log_warn "API health check failed, but services are running"
@@ -380,8 +383,8 @@ BACKUP_FILE="\$BACKUP_DIR/ai_haccp_backup_\$DATE"
 mkdir -p "\$BACKUP_DIR"
 
 echo "Creating backup: \$BACKUP_FILE"
-env $env_prefix docker-compose -p "${NAME_OF_APPLICATION}-${USER_ID}-${HTTPS_PORT1}" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
-docker cp \$(docker-compose -p "-${USER_ID}-${HTTPS_PORT1}" -f docker-compose.yml ps -q api):/tmp/backup.db "\$BACKUP_FILE.db"
+env $env_prefix docker-compose -p "${NAME_OF_APPLICATION}-${USER_ID}-${HTTPS_PORT}" -f docker-compose.yml exec -T api cp /app/data/ai_haccp.db /tmp/backup.db
+docker cp \$(docker-compose -p "-${USER_ID}-${HTTPS_PORT}" -f docker-compose.yml ps -q api):/tmp/backup.db "\$BACKUP_FILE.db"
 
 if [[ \$? -eq 0 ]]; then
     echo "Backup created successfully: \$BACKUP_FILE"
