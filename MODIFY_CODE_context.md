@@ -22,10 +22,18 @@ if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
 export PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
-export HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
-export HTTPS_PORT=$((HTTP_PORT+1))
-export HTTP_PORT2=$(($HTTPS_PORT+1))
+export HTTP_PORT1=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
+export HTTPS_PORT1=$((HTTP_PORT1+1))
+export HTTP_PORT2=$(($HTTPS_PORT1+1))
 export HTTPS_PORT2=$(($HTTP_PORT2+1))
+export HTTP_PORT3=$(($HTTPS_PORT2+1))
+export HTTPS_PORT3=$(($HTTP_PORT3+1))
+export HTTP_PORT4=$(($HTTPS_PORT3+1))
+export HTTPS_PORT4=$(($HTTP_PORT4+1))
+export HTTP_PORT5=$(($HTTPS_PORT4+1))
+export HTTPS_PORT5=$(($HTTP_PORT5+1))
+export HTTP_PORT=$(($HTTPS_PORT5+1))
+export HTTPS_PORT=$(($HTTP_PORT+1))
 #### 2. Change directory to the repository:
    cd {{APPLICATION_FOLDER}}
 #### 3. Check that the working tree is clean (no uncommitted changes).
@@ -72,7 +80,7 @@ else
     log_warn "No running containers found for USER_ID: $USER_ID"
 fi
 #### 13. Start the docker services using following command:
-HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT" -f docker-compose.yml --env-file .env.prod up -d
+HTTP_PORT1=$HTTP_PORT1 HTTPS_PORT1=$HTTPS_PORT1 HTTP_PORT2=$HTTP_PORT2 HTTPS_PORT2=$HTTPS_PORT2 HTTP_PORT3=$HTTP_PORT3 HTTPS_PORT3=$HTTPS_PORT3 HTTP_PORT4=$HTTP_PORT4 HTTPS_PORT4=$HTTPS_PORT4 HTTP_PORT5=$HTTP_PORT5 HTTPS_PORT5=$HTTPS_PORT5 HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT USER_ID=$USER_ID docker-compose -p "$NAME_OF_APPLICATION-$USER_ID-$HTTPS_PORT1" -f docker-compose.yml --env-file .env.prod up -d
 #### 14. At the end, print a short summary including:
     - the branch name,
     - the git commit hash,

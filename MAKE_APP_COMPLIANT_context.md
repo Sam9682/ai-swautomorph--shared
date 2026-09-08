@@ -56,12 +56,12 @@ Follow these steps EXACTLY:
    If docker-compose.yml is missing or non-compliant:
    - Use ~/ai-swautomorph/docker-compose.yml as reference
    - Adapt it for {{APPLICATION_NAME}}
-   - Ensure proper port variables: ${HTTP_PORT}, ${HTTPS_PORT}, ${HTTP_PORT2}, ${HTTPS_PORT2}
+   - Ensure proper port variables: ${HTTP_PORT1}, ${HTTPS_PORT1}, ${HTTP_PORT2}, ${HTTPS_PORT2}, ${HTTP_PORT3}, ${HTTPS_PORT3}, ${HTTP_PORT4}, ${HTTPS_PORT4}, ${HTTP_PORT5}, ${HTTPS_PORT5}, ${HTTP_PORT}, ${HTTPS_PORT}
    - Ensure proper USER_ID handling in container names
    - Ensure proper project naming pattern
    - Update service names to match application
    - Configure volumes, networks, and environment variables
-   - verify that the names of the containers foolow the format: "{{APPLICATION_NAME}}-*-${USER_ID}-${HTTP_PORT}" for the internal application or "{{APPLICATION_NAME}}-*-${USER_ID}-${HTTPS_PORT}" for the main frontend application
+   - verify that the names of the containers foolow the format: "{{APPLICATION_NAME}}-*-${USER_ID}-${HTTP_PORT1}" for the internal application or "{{APPLICATION_NAME}}-*-${USER_ID}-${HTTPS_PORT1}" for the main frontend application
 
 #### 7. Add ai-swautomorph-shared as git submodule
    Clone the shared repository as a git submodule and create a symbolic link to deployApp.sh:
@@ -103,7 +103,7 @@ Follow these steps EXACTLY:
    RANGE_START=6000
    RANGE_RESERVED=100
    APPLICATION_IDENTITY_NUMBER=[appropriate number]
-   RANGE_PORTS_PER_APPLICATION=4
+   RANGE_PORTS_PER_APPLICATION=12
    ```
    
    [appropriate number] is a unique number for each application. 

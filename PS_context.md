@@ -11,10 +11,18 @@ if ! [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
     USER_ID=0
 fi
 export PORT_RANGE_BEGIN=$((RANGE_START+USER_ID*RANGE_RESERVED))
-export HTTP_PORT=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
-export HTTPS_PORT=$((HTTP_PORT+1))
-export HTTP_PORT2=$(($HTTPS_PORT+1))
+export HTTP_PORT1=$((PORT_RANGE_BEGIN+APPLICATION_IDENTITY_NUMBER*RANGE_PORTS_PER_APPLICATION))
+export HTTPS_PORT1=$((HTTP_PORT1+1))
+export HTTP_PORT2=$(($HTTPS_PORT1+1))
 export HTTPS_PORT2=$(($HTTP_PORT2+1))
+export HTTP_PORT3=$(($HTTPS_PORT2+1))
+export HTTPS_PORT3=$(($HTTP_PORT3+1))
+export HTTP_PORT4=$(($HTTPS_PORT3+1))
+export HTTPS_PORT4=$(($HTTP_PORT4+1))
+export HTTP_PORT5=$(($HTTPS_PORT4+1))
+export HTTPS_PORT5=$(($HTTP_PORT5+1))
+export HTTP_PORT=$(($HTTPS_PORT5+1))
+export HTTPS_PORT=$(($HTTP_PORT+1))
 export DOMAIN=$(($DOMAIN))
 
 #### 2. Check the Status of the application using docker-compose command. If the containers is not started, do not ask to start or do something else. Use the following commands to get the status of the application:
@@ -39,6 +47,16 @@ export git_remotes=$(git remote -v 2>/dev/null | awk '{print $2}' | sort -u | jq
 jq -n --arg user_id "$USER_ID" \
       --arg user_name "$USER_NAME" \
       --arg user_email "$USER_EMAIL" \
+      --arg http_port1 "$HTTP_PORT1" \
+      --arg https_port1 "$HTTPS_PORT1" \
+      --arg http_port2 "$HTTP_PORT2" \
+      --arg https_port2 "$HTTPS_PORT2" \
+      --arg http_port3 "$HTTP_PORT3" \
+      --arg https_port3 "$HTTPS_PORT3" \
+      --arg http_port4 "$HTTP_PORT4" \
+      --arg https_port4 "$HTTPS_PORT4" \
+      --arg http_port5 "$HTTP_PORT5" \
+      --arg https_port5 "$HTTPS_PORT5" \
       --arg http_port "$HTTP_PORT" \
       --arg https_port "$HTTPS_PORT" \
       --arg docker_status "$docker_status" \
@@ -49,6 +67,16 @@ jq -n --arg user_id "$USER_ID" \
           "USER_ID": $user_id,
           "USER_NAME": $user_name,
           "USER_EMAIL": $user_email,
+          "HTTP_PORT1": $http_port1,
+          "HTTPS_PORT1": $https_port1,
+          "HTTP_PORT2": $http_port2,
+          "HTTPS_PORT2": $https_port2,
+          "HTTP_PORT3": $http_port3,
+          "HTTPS_PORT3": $https_port3,
+          "HTTP_PORT4": $http_port4,
+          "HTTPS_PORT4": $https_port4,
+          "HTTP_PORT5": $http_port5,
+          "HTTPS_PORT5": $https_port5,
           "HTTP_PORT": $http_port,
           "HTTPS_PORT": $https_port
         },
@@ -57,7 +85,7 @@ jq -n --arg user_id "$USER_ID" \
         "git_remote": $git_remotes
       }'
 
-Finaly, display the link to the web site so the user can click on it to open the application: https://www.${DOMAIN}:$HTTPS_PORT
+Finaly, display the link to the web site so the user can click on it to open the application: https://www.${DOMAIN}:$HTTPS_PORT1
 
 As an example, this is and example of the expected JSON Output Format:
 {
@@ -65,6 +93,16 @@ As an example, this is and example of the expected JSON Output Format:
     "USER_ID": "...",
     "USER_NAME": "...",
     "USER_EMAIL": "...",
+    "HTTP_PORT1": "...",
+    "HTTPS_PORT1": "...",
+    "HTTP_PORT2": "...",
+    "HTTPS_PORT2": "...",
+    "HTTP_PORT3": "...",
+    "HTTPS_PORT3": "...",
+    "HTTP_PORT4": "...",
+    "HTTPS_PORT4": "...",
+    "HTTP_PORT5": "...",
+    "HTTPS_PORT5": "...",
     "HTTP_PORT": "...",
     "HTTPS_PORT": "..."
   },
