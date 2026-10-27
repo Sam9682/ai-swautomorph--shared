@@ -30,30 +30,11 @@ load_config() {
 load_config
 
 # Global Parameters
-#
-# Usage: deployApp.sh [COMMAND] [[USER_ID] OR [USER_NAME]] [USER_EMAIL] [DESCRIPTION]
-#
-# The second positional argument accepts EITHER a numeric USER_ID or a textual
-# USER_NAME. When it is omitted entirely (e.g. "./deployApp.sh stop"), the
-# identity is auto-resolved by resolve_identity() from (in order):
-#   1. the current/parent folder names,
-#   2. the running docker containers,
-#   3. the opcp-explorer API.
 COMMAND=${1:-help}
-
-# Keep the raw second argument so we can tell "not provided" from the default.
-ARG_USER_ID_OR_NAME="${2-}"
-
-# Defaults (may be overridden by CLI args and/or resolve_identity()).
 USER_ID=${2:-0}
 USER_NAME=${3:-"admin"}
 USER_EMAIL=${4:-"admin@softfluid.fr"}
 DESCRIPTION=${5:-"Basic Admin User"}
-
-# opcp-explorer API used as a last-resort source for identity resolution.
-# A bearer token may be supplied via OPCP_API_TOKEN for authenticated calls.
-OPCP_API_BASE=${OPCP_API_BASE:-"https://opcp-psmc.com/api"}
-OPCP_API_TOKEN=${OPCP_API_TOKEN:-""}
 
 RANGE_START=6000
 RANGE_RESERVED=100
@@ -81,121 +62,6 @@ PORT_NAMES=(
 DOMAIN=${DOMAIN:-"softfluid.fr"}
 EMAIL=${EMAIL:-"admin@softfluid.fr"}
 ENV_FILE=".env.prod"
-
-# Resolve the deployment identity (USER_ID / USER_NAME / APPLICATION_NAME).
-#
-# Behaviour depends on the second positional argument (ARG_USER_ID_OR_NAME):
-#   • numeric  -> treated as USER_ID (USER_NAME keeps its CLI/default value).
-#   • textual  -> treated as USER_NAME; USER_ID is auto-resolved.
-#   • empty    -> both are auto-resolved from the environment.
-#
-# APPLICATION_NAME is the current folder name; when the identity must be
-# auto-resolved, USER_NAME defaults to the PARENT folder name
-# (e.g. ~/deployments/admin/opcp-workspace -> USER_NAME=admin,
-#  APPLICATION_NAME=opcp-workspace).
-#
-# Auto-resolution of USER_ID tries, in order:
-#   1. docker container names matching "*<APPLICATION_NAME>-<USER_ID>-<PORT>",
-#   2. the opcp-explorer API (looked up by user name).
-resolve_identity() {
-    # APPLICATION_NAME = name of the current working directory.
-    APPLICATION_NAME="$(basename "$PWD")"
-    # Parent folder name (one level up from the current directory).
-    local parent_name
-    parent_name="$(basename "$(dirname "$PWD")")"
-
-    local need_user_id=0
-
-    if [[ -z "$ARG_USER_ID_OR_NAME" ]]; then
-        # No second argument at all: derive both from the folder layout.
-        USER_NAME="$parent_name"
-        need_user_id=1
-        log_info "No USER_ID/USER_NAME provided; derived USER_NAME='${USER_NAME}', APPLICATION_NAME='${APPLICATION_NAME}' from folder path"
-    elif [[ "$ARG_USER_ID_OR_NAME" =~ ^[0-9]+$ ]]; then
-        # Numeric: it is the USER_ID (already in USER_ID via positional default).
-        USER_ID="$ARG_USER_ID_OR_NAME"
-    else
-        # Textual: it is the USER_NAME; USER_ID must be resolved.
-        USER_NAME="$ARG_USER_ID_OR_NAME"
-        need_user_id=1
-    fi
-
-    if [[ "$need_user_id" -eq 1 ]]; then
-        local resolved
-        resolved="$(resolve_user_id_from_docker)"
-        if [[ -n "$resolved" ]]; then
-            USER_ID="$resolved"
-            log_info "Resolved USER_ID='${USER_ID}' from docker containers"
-        else
-            resolved="$(resolve_user_id_from_api)"
-            if [[ -n "$resolved" ]]; then
-                USER_ID="$resolved"
-                log_info "Resolved USER_ID='${USER_ID}' from opcp-explorer API"
-            else
-                log_warn "Could not resolve USER_ID from docker or API; falling back to USER_ID='${USER_ID}'"
-            fi
-        fi
-    fi
-}
-
-# Parse USER_ID out of the docker container names for the current application.
-# Container names follow the convention "<prefix><APPLICATION_NAME>-<USER_ID>-<PORT>".
-# Prints the USER_ID on stdout, or nothing if no matching container is found.
-resolve_user_id_from_docker() {
-    local names=""
-
-    # Prefer `docker compose ps -a` (compose v2). Fall back to plain docker.
-    if docker compose version &> /dev/null; then
-        names="$(docker compose ps -a --format '{{.Name}}' 2>/dev/null)"
-    fi
-    if [[ -z "$names" ]]; then
-        names="$(docker ps -a --format '{{.Names}}' 2>/dev/null)"
-    fi
-
-    [[ -z "$names" ]] && return 0
-
-    # Match "...<APPLICATION_NAME>-<digits>-<digits>" and capture the first
-    # <digits> group (the USER_ID). Return the first match found.
-    local line uid
-    while IFS= read -r line; do
-        [[ -z "$line" ]] && continue
-        if [[ "$line" =~ ${APPLICATION_NAME}-([0-9]+)-([0-9]+)$ ]]; then
-            uid="${BASH_REMATCH[1]}"
-            printf '%s' "$uid"
-            return 0
-        fi
-    done <<< "$names"
-
-    return 0
-}
-
-# Look up USER_ID from the opcp-explorer API using the resolved USER_NAME.
-# Prints the USER_ID on stdout, or nothing on failure.
-resolve_user_id_from_api() {
-    command -v curl &> /dev/null || return 0
-    command -v jq &> /dev/null || return 0
-    [[ -z "$USER_NAME" ]] && return 0
-
-    # No authentication is required for this endpoint. Correct path is
-    # "/users/id?username=<name>", which returns e.g. {"id":1,"username":"admin"}.
-    local url="${OPCP_API_BASE}/users/id?username=${USER_NAME}"
-
-    local response
-    response="$(curl -fsS "$url" 2>/dev/null)" || return 0
-    [[ -z "$response" ]] && return 0
-
-    # Accept several common response shapes:
-    #   {"id": 1}, {"user_id": 1}, {"userid": 1},
-    #   [{"id": 1, ...}], {"users": [{"id": 1}]}, {"data": [{"id": 1}]}
-    local uid
-    uid="$(printf '%s' "$response" | jq -r '
-        ( .. | objects | (.id // .user_id // .userid) ) // empty
-        | select(. != null)
-    ' 2>/dev/null | head -n1)"
-
-    [[ "$uid" =~ ^[0-9]+$ ]] && printf '%s' "$uid"
-    return 0
-}
 
 # Calculate ports (convert alphanumeric USER_ID to numeric for port calculation)
 calculate_ports() {
@@ -261,6 +127,44 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Normalize the Docker CLI environment before invoking docker/docker-compose.
+#
+# When this script is launched by the control plane / virtual operator, the
+# process can inherit a HOME that does not belong to the effective user (for
+# example HOME=/home/git from the Gitea service context). The Docker CLI and
+# buildx then try to read $HOME/.docker/config.json and
+# $HOME/.docker/buildx/instances, which the deploying user cannot access,
+# producing errors such as:
+#   WARNING: Error loading config file: open /home/git/.docker/config.json: permission denied
+#   stat /home/git/.docker/buildx/instances: permission denied
+#
+# We pin HOME to the real home of the effective user and point DOCKER_CONFIG at
+# an owned, writable directory so docker/buildx always read a reachable config.
+normalize_docker_env() {
+    # Resolve the effective user's real home from the passwd database rather
+    # than trusting an inherited HOME that may point elsewhere.
+    local real_home
+    real_home="$(getent passwd "$(id -un)" | cut -d: -f6)"
+    if [[ -z "$real_home" || ! -d "$real_home" ]]; then
+        real_home="${HOME}"
+    fi
+
+    if [[ "${HOME}" != "$real_home" ]]; then
+        log_warn "HOME was '${HOME}', resetting to '${real_home}' for Docker operations"
+        export HOME="$real_home"
+    fi
+
+    # Isolate the Docker config in a user-owned directory. This avoids reading
+    # a foreign user's ~/.docker and gives buildx a writable instances dir.
+    export DOCKER_CONFIG="${HOME}/.docker"
+    if ! mkdir -p "${DOCKER_CONFIG}" 2>/dev/null; then
+        # Fall back to a guaranteed-writable location if HOME is not writable.
+        DOCKER_CONFIG="$(mktemp -d "${TMPDIR:-/tmp}/docker-config.XXXXXX")"
+        export DOCKER_CONFIG
+        log_warn "Could not use ${HOME}/.docker, using temporary DOCKER_CONFIG=${DOCKER_CONFIG}"
+    fi
+}
+
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
    log_error "This script should not be run as root"
@@ -282,27 +186,6 @@ check_prerequisites() {
     fi
 
     log_info "Prerequisites check passed ✅"
-}
-
-# Ensure the docker-compose .env file exists.
-# docker-compose references ".env" via env_file; if it is missing the
-# deployment fails with: "env file .../.env not found". Seed it from
-# .env.example when available so the stack can start.
-ensure_env_file() {
-    if [[ -f ".env" ]]; then
-        log_info "Environment file .env already exists ✅"
-        return 0
-    fi
-
-    if [[ -f ".env.example" ]]; then
-        log_info ".env not found, creating it from .env.example..."
-        cp ".env.example" ".env"
-        chmod 600 ".env"
-        log_info ".env created from .env.example ✅"
-    else
-        log_error ".env not found and .env.example is missing; cannot create .env"
-        return 1
-    fi
 }
 
 # Generate secure passwords
@@ -576,7 +459,6 @@ start_services() {
     log_info "Starting ${NAME_OF_APPLICATION} production deployment..."
     show_environment
     check_prerequisites
-    ensure_env_file
     generate_secrets
     generate_nginx_config
     setup_ssl
@@ -635,7 +517,7 @@ show_logs() {
 
 # Show usage help
 show_usage() {
-    echo "Usage: $0 [COMMAND] [[USER_ID] OR [USER_NAME]] [USER_EMAIL] [DESCRIPTION]"
+    echo "Usage: $0 [COMMAND] [USER_ID] [USER_NAME] [USER_EMAIL] [DESCRIPTION]"
     echo ""
     echo "Commands:"
     echo "  start, -s, --start     Start the application"
@@ -645,19 +527,8 @@ show_usage() {
     echo "  logs, -l, --logs       Show application logs"
     echo "  help, -h, --help       Show this help message"
     echo ""
-    echo "Arguments:"
-    echo "  USER_ID or USER_NAME   Optional. A numeric USER_ID or a textual"
-    echo "                         USER_NAME. If omitted, the identity is derived"
-    echo "                         from the folder path (USER_NAME = parent folder,"
-    echo "                         APPLICATION_NAME = current folder) and the"
-    echo "                         USER_ID is resolved from running docker"
-    echo "                         containers, then from the opcp-explorer API."
-    echo "  USER_EMAIL             Optional. Contact email for the deployment."
-    echo "  DESCRIPTION            Optional. Free-text description."
-    echo ""
     echo "Examples:"
     echo "  $0 start 1 john john@example.com \"My App\""
-    echo "  $0 start john"
     echo "  $0 stop"
     echo "  $0 ps"
 }
@@ -707,24 +578,11 @@ check_status() {
 
 # Main function - orchestrates the deployment process
 main() {
-    case $COMMAND in
-        "help"|"--help"|"-h")
-            show_usage
-            exit 0
-            ;;
-        "ps"|"--ps"|"-p"|"stop"|"--stop"|"-k"|"logs"|"--logs"|"-l"|"restart"|"--restart"|"-r"|"start"|"--start"|"-s")
-            # Known operational command: continue to identity resolution below.
-            ;;
-        *)
-            show_usage
-            exit 1
-            ;;
-    esac
-
-    # Resolve identity (USER_ID / USER_NAME / APPLICATION_NAME) before any
-    # operation that relies on them, then compute the port set.
-    resolve_identity
     calculate_ports
+
+    # Pin HOME/DOCKER_CONFIG to a reachable, user-owned location before any
+    # docker/docker-compose invocation (see normalize_docker_env).
+    normalize_docker_env
 
     case $COMMAND in
         "ps"|"--ps"|"-p")
@@ -749,6 +607,14 @@ main() {
 
             start_services
             exit 0
+            ;;
+        "help"|"--help"|"-h")
+            show_usage
+            exit 0
+            ;;
+        *)
+            show_usage
+            exit 1
             ;;
     esac
 }
